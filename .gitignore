@@ -1,0 +1,33 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+*.log
+*.tsbuildinfo
+.DS_Store
+Thumbs.db
+.flatpak-builder
+.claude
+
+# Rust build output
+target
+
+storage/data
+streaming/data
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+worker/venv/
+
+# CI checkout slot for sibling repos.
+/_internal
+
+# IDE
+.idea/
+
+# FireBase
+.firebase
