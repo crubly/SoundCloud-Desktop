@@ -1,10 +1,10 @@
-import React, {useMemo} from 'react';
-import {ClusterFeedbackProvider} from '../../../lib/recsFeedback';
-import type {Track} from '../../../stores/player';
-import {HorizontalScroll} from '../../ui/HorizontalScroll';
-import {ClusterHeader} from './ClusterHeader';
-import {NeighborCard} from './NeighborCard';
-import type {ClusterHydrated, ClusterNeighborDto} from './types';
+import React, { useMemo } from 'react';
+import { ClusterFeedbackProvider } from '../../../lib/recsFeedback';
+import type { Track } from '../../../stores/player';
+import { HorizontalScroll } from '../../ui/HorizontalScroll';
+import { ClusterHeader } from './ClusterHeader';
+import { NeighborCard } from './NeighborCard';
+import type { ClusterHydrated, ClusterNeighborDto } from './types';
 
 interface Props {
   title: string;

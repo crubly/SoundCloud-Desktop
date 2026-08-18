@@ -1,12 +1,12 @@
-import React, {useMemo} from 'react';
-import {useTranslation} from 'react-i18next';
-import {art, dur} from '../../../lib/formatters';
-import {pauseWhite12, playWhite12} from '../../../lib/icons';
-import {usePerfMode} from '../../../lib/perf';
-import {ClusterFeedbackProvider} from '../../../lib/recsFeedback';
-import {useTrackPlay} from '../../../lib/useTrackPlay';
-import type {Track} from '../../../stores/player';
-import {LikeButton} from '../../music/LikeButton';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { art, dur } from '../../../lib/formatters';
+import { pauseWhite12, playWhite12 } from '../../../lib/icons';
+import { usePerfMode } from '../../../lib/perf';
+import { ClusterFeedbackProvider } from '../../../lib/recsFeedback';
+import { useTrackPlay } from '../../../lib/useTrackPlay';
+import type { Track } from '../../../stores/player';
+import { LikeButton } from '../../music/LikeButton';
 
 const SCHEDULE_SIZE = 10;
 const FRESH_WINDOW_MS = 14 * 24 * 3600 * 1000;

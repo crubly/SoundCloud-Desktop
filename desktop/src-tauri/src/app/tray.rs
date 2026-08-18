@@ -81,7 +81,7 @@ mod linux {
             "com.soundcloud.desktop".into()
         }
         fn title(&self) -> String {
-            "SoundCloud Desktop".into()
+            "SoundCloud".into()
         }
         fn icon_pixmap(&self) -> Vec<ksni::Icon> {
             self.icon.clone()
@@ -166,7 +166,7 @@ mod native {
 
         TrayIconBuilder::new()
             .icon(app.default_window_icon().cloned().expect("no app icon"))
-            .tooltip("SoundCloud Desktop")
+            .tooltip("SoundCloud")
             .menu(&menu)
             // Левый клик открывает мини-плеер (ниже); меню — на правый клик.
             .show_menu_on_left_click(false)

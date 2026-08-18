@@ -1,13 +1,13 @@
-import {memo} from 'react';
-import {useTranslation} from 'react-i18next';
-import {auraRgba} from '../../../lib/aura';
-import {art} from '../../../lib/formatters';
-import {User as UserIcon} from '../../../lib/icons';
-import {usePerfMode} from '../../../lib/perf';
-import {usePlayerStore} from '../../../stores/player';
-import {SoundprintBars} from '../../library/SoundprintBars';
-import type {Soundprint} from '../../library/useSoundprint';
-import {VibePortal} from '../../music/soundwave/vibe-portal';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { auraRgba } from '../../../lib/aura';
+import { art } from '../../../lib/formatters';
+import { User as UserIcon } from '../../../lib/icons';
+import { usePerfMode } from '../../../lib/perf';
+import { usePlayerStore } from '../../../stores/player';
+import { SoundprintBars } from '../../library/SoundprintBars';
+import type { Soundprint } from '../../library/useSoundprint';
+import { VibePortal } from '../../music/soundwave/vibe-portal';
 
 interface MastheadUser {
   username: string;

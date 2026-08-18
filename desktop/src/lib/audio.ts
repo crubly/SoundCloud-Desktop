@@ -1,9 +1,10 @@
-import {listen} from '@tauri-apps/api/event';
-import {toast} from 'sonner';
+import { listen } from '@tauri-apps/api/event';
+import { toast } from 'sonner';
 import i18n from '../i18n';
-import type {Track} from '../stores/player';
-import {usePlayerStore} from '../stores/player';
-import {useSettingsStore} from '../stores/settings';
+import type { Track } from '../stores/player';
+import { usePlayerStore } from '../stores/player';
+import { useLyricsStore } from '../stores/lyrics';
+import { useSettingsStore } from '../stores/settings';
 import {
   api,
   buildStorageUrls,
@@ -19,13 +20,19 @@ import {
   removeCachedTrack,
   type TrackCacheInfo,
 } from './cache';
-import {trackedInvoke as invoke} from './diagnostics';
-import {isUrnDisliked} from './dislikes';
-import {recordEvent} from './events';
-import {art} from './formatters';
-import {rememberTracks} from './offline-index';
-import {getUrnCluster, recordClusterFeedback} from './recsFeedback';
-import {getArtistDisplay, getDisplayTitle} from './track-display';
+import { trackedInvoke as invoke } from './diagnostics';
+import { isUrnDisliked } from './dislikes';
+import { recordEvent } from './events';
+import { art } from './formatters';
+import { rememberTracks } from './offline-index';
+import { getUrnCluster, recordClusterFeedback } from './recsFeedback';
+import { getArtistDisplay, getDisplayTitle } from './track-display';
+import {
+  ensureYouTubeAudio,
+  isYouTubeUrn,
+  type YouTubeStage,
+  youtubeIdFromUrn,
+} from './youtube';
 
 const SKIP_THRESHOLD_SEC = 30;
 /** Минимум, чтобы засчитать «прослушано полностью» для коротких треков (50% длительности). */
@@ -44,6 +51,7 @@ let fallbackDuration = 0;
 let cachedTime = 0;
 let cachedDuration = 0;
 let downloadProgress: number | null = null;
+let ytStage: YouTubeStage | null = null;
 let loadGen = 0;
 let lastEndedUrn: string | null = null;
 const listeners = new Set<() => void>();
@@ -82,6 +90,17 @@ export function getDuration(): number {
 
 export function getDownloadProgress(): number | null {
   return downloadProgress;
+}
+
+/** Стадия подготовки YouTube-аудио (setup/download/convert) для текущего трека. */
+export function getYtStage(): YouTubeStage | null {
+  return ytStage;
+}
+
+function setYtStage(value: YouTubeStage | null): void {
+  if (ytStage === value) return;
+  ytStage = value;
+  notify();
 }
 
 function setDownloadProgress(value: number | null): void {
@@ -327,6 +346,7 @@ async function loadTrack(track: Track) {
   cachedDuration = fallbackDuration;
   cachedTime = 0;
   setDownloadProgress(null);
+  setYtStage(null);
   usePlayerStore.getState().setPlaybackTransport(null, null);
   notify();
 
@@ -334,6 +354,7 @@ async function loadTrack(track: Track) {
   const { eqEnabled, eqGains, normalizeVolume } = useSettingsStore.getState();
   invoke('audio_set_eq', { enabled: eqEnabled, gains: eqGains }).catch(console.error);
   invoke('audio_set_normalization', { enabled: normalizeVolume }).catch(console.error);
+  syncVisualizerGate();
 
   // Sync volume + playback rate (pitch is folded into the speed value sent to Rust)
   invoke('audio_set_volume', { volume: usePlayerStore.getState().volume }).catch(console.error);
@@ -344,9 +365,11 @@ async function loadTrack(track: Track) {
 
     // The cached file can be swapped (raw А → clean Б) or evicted between resolve
     // and read; re-resolve through the cache to recover the current path.
+    const ytId = youtubeIdFromUrn(urn);
     const reResolve = async (): Promise<string | null> => {
       const info = await getCacheInfo(urn);
       if (info?.path) return info.path;
+      if (ytId) return null;
       try {
         return (await ensureTrackCached(urn, highQualityStreaming, track.duration)).path;
       } catch {
@@ -373,6 +396,32 @@ async function loadTrack(track: Track) {
         updateMetadata(track, loadResult.duration_secs);
         notify();
       }
+      afterLoad(track, gen);
+      return;
+    }
+
+    // YouTube: скачивание + конвертация в MP3 на Rust-стороне. Кэш-хит уже
+    // отработан в Strategy 1 выше (общий audio-каталог, urn-имя файла).
+    if (ytId) {
+      setDownloadProgress(0);
+      const ready = await ensureYouTubeAudio(ytId);
+      if (gen !== loadGen) return;
+      setDownloadProgress(null);
+      setYtStage(null);
+      console.log('[Audio] Playing youtube audio:', urn);
+      const loadResult = await loadCachedFile(
+        urn,
+        ready.path,
+        !usePlayerStore.getState().isPlaying,
+        reResolve,
+      );
+      if (loadResult?.duration_secs) {
+        fallbackDuration = loadResult.duration_secs;
+        cachedDuration = loadResult.duration_secs;
+        updateMetadata(track, loadResult.duration_secs);
+        notify();
+      }
+      if (gen !== loadGen) return;
       afterLoad(track, gen);
       return;
     }
@@ -436,7 +485,13 @@ function afterLoad(track: Track, gen: number) {
       : track;
 
   // Record to listening history (fire-and-forget), skip on repeat-one (same track looping)
-  if (historyTrack?.urn && historyTrack.title && usePlayerStore.getState().repeat !== 'one') {
+  // and on YouTube tracks — история на сервере знает только SoundCloud URN.
+  if (
+    historyTrack?.urn &&
+    historyTrack.title &&
+    usePlayerStore.getState().repeat !== 'one' &&
+    !isYouTubeUrn(historyTrack.urn)
+  ) {
     api('/history', {
       method: 'POST',
       body: JSON.stringify({
@@ -458,6 +513,8 @@ function afterLoad(track: Track, gen: number) {
 }
 
 async function hydrateTrackMetadata(track: Track, gen: number) {
+  // Серверные метаданные есть только для SoundCloud — youtube-URN гидратить нечем.
+  if (isYouTubeUrn(track.urn)) return;
   let nextTrack = await fetchFreshTrackMetadata(track);
   if (gen !== loadGen || currentUrn !== track.urn) return;
 
@@ -537,6 +594,13 @@ listen<{ urn: string; progress: number }>('track:download-progress', (event) => 
   if (urn === currentUrn) {
     setDownloadProgress(progress);
   }
+});
+
+listen<{ id: string; stage: YouTubeStage }>('yt:progress', (event) => {
+  const current = currentUrn ? youtubeIdFromUrn(currentUrn) : null;
+  if (!current || event.payload.id !== current) return;
+  const stage = event.payload.stage;
+  setYtStage(stage === 'done' || stage === 'error' ? null : stage);
 });
 
 listen('audio:ended', () => {
@@ -656,21 +720,45 @@ usePlayerStore.subscribe((state, prev) => {
 
 /** Combine playback rate and (manual) pitch into a single Rust-side speed value.
  *  Rust uses rodio's `set_speed` which couples tempo+pitch — so manual pitch is
- *  applied as a multiplier on top of the user's rate.
+ *  applied as a multiplier on top of the user's rate. A global audio effect
+ *  (nightcore / vaporwave) is folded in on top of that.
  */
-function getEffectivePlaybackRate(): number {
+export function getEffectivePlaybackRate(): number {
   const { playbackRate, pitchControlMode, pitchSemitones } = usePlayerStore.getState();
+  const { audioEffect } = useSettingsStore.getState();
+  let rate = playbackRate;
   if (pitchControlMode === 'manual' && Math.abs(pitchSemitones) > 0.001) {
-    return playbackRate * 2 ** (pitchSemitones / 12);
+    rate *= 2 ** (pitchSemitones / 12);
   }
-  return playbackRate;
+  if (audioEffect === 'nightcore') rate *= 1.25;
+  else if (audioEffect === 'vaporwave') rate *= 0.85;
+  return rate;
 }
 
 /* ── EQ settings subscriber ──────────────────────────────────── */
 
+/** FFT-анализатор нужен только открытой панели лирики — иначе это постоянные
+ *  30 Гц FFT + IPC без потребителя (заметный жор CPU/GPU при записи экрана). */
+function syncVisualizerGate() {
+  const enabled = useSettingsStore.getState().lyricsVisualizer && useLyricsStore.getState().open;
+  invoke('audio_set_visualizer', { enabled }).catch(console.error);
+}
+
+useLyricsStore.subscribe((state, prev) => {
+  if (state.open !== prev.open) syncVisualizerGate();
+});
+
 useSettingsStore.subscribe((state, prev) => {
   if (state.eqEnabled !== prev.eqEnabled || state.eqGains !== prev.eqGains) {
     invoke('audio_set_eq', { enabled: state.eqEnabled, gains: state.eqGains }).catch(console.error);
+  }
+
+  if (state.stereoWidth !== prev.stereoWidth) {
+    invoke('audio_set_stereo', { width: state.stereoWidth }).catch(console.error);
+  }
+
+  if (state.audioEffect !== prev.audioEffect) {
+    invoke('audio_set_playback_rate', { rate: getEffectivePlaybackRate() }).catch(console.error);
   }
 
   if (state.normalizeVolume !== prev.normalizeVolume) {
@@ -678,6 +766,10 @@ useSettingsStore.subscribe((state, prev) => {
     if (usePlayerStore.getState().currentTrack) {
       void reloadCurrentTrack();
     }
+  }
+
+  if (state.lyricsVisualizer !== prev.lyricsVisualizer) {
+    syncVisualizerGate();
   }
 });
 
@@ -763,6 +855,9 @@ export function preloadQueue() {
   for (let i = 1; i <= 3; i++) {
     const idx = queueIndex + i;
     if (idx < queue.length) {
+      // YouTube-треки кешируются по требованию (скачивание+конвертация) —
+      // предзагрузка через SC-ресурсы для них бессмысленна.
+      if (isYouTubeUrn(queue[idx].urn)) continue;
       entries.push({
         urn: queue[idx].urn,
         urls: streamFallbackUrls(queue[idx].urn, hq),

@@ -1,9 +1,9 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-import {useShallow} from 'zustand/shallow';
-import {useHostStatusStore} from '../../lib/host-status';
-import {Star, X} from '../../lib/icons';
-import {useFailoverUi} from './useFailoverUi';
+import { useTranslation } from 'react-i18next';
+import { useShallow } from 'zustand/shallow';
+import { useHostStatusStore } from '../../lib/host-status';
+import { Star, X } from '../../lib/icons';
+import { useFailoverUi } from './useFailoverUi';
 
 // Плоский тёмный tint с фиолетовой подсветкой (в духе StarBadge), БЕЗ backdrop-filter.
 const PILL_STYLE: React.CSSProperties = {

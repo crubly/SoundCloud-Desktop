@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {getTranscodeStatus, type TranscodeStatus} from '../../lib/cache';
+import { useEffect, useState } from 'react';
+import { getTranscodeStatus, type TranscodeStatus } from '../../lib/cache';
 
 const POLL_MS = 2500;
 

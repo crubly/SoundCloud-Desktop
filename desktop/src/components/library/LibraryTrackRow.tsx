@@ -1,15 +1,23 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-import {preloadTrack} from '../../lib/audio';
-import {art, dur, fc} from '../../lib/formatters';
-import {headphones11, heart11, ListMusic, ListPlus, Music, pauseWhite14, playWhite14,} from '../../lib/icons';
-import {useTrackPlay} from '../../lib/useTrackPlay';
-import type {Track} from '../../stores/player';
-import {usePlayerStore} from '../../stores/player';
-import {AddToPlaylistDialog} from '../music/AddToPlaylistDialog';
-import {LikeButton} from '../music/LikeButton';
-import {sameScdMeta, TrackStatusBadges} from '../music/TrackStatusBadges';
-import {TrackTitleArtist} from '../music/TrackTitleArtist';
+import { useTranslation } from 'react-i18next';
+import { preloadTrack } from '../../lib/audio';
+import { art, dur, fc } from '../../lib/formatters';
+import {
+  headphones11,
+  heart11,
+  ListMusic,
+  ListPlus,
+  Music,
+  pauseWhite14,
+  playWhite14,
+} from '../../lib/icons';
+import { useTrackPlay } from '../../lib/useTrackPlay';
+import type { Track } from '../../stores/player';
+import { usePlayerStore } from '../../stores/player';
+import { AddToPlaylistDialog } from '../music/AddToPlaylistDialog';
+import { LikeButton } from '../music/LikeButton';
+import { sameScdMeta, TrackStatusBadges } from '../music/TrackStatusBadges';
+import { TrackTitleArtist } from '../music/TrackTitleArtist';
 
 export const LibraryTrackRow = React.memo(
   function LibraryTrackRow({

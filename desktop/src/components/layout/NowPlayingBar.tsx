@@ -1,61 +1,61 @@
 import * as Popover from '@radix-ui/react-popover';
 import * as Slider from '@radix-ui/react-slider';
-import {useQuery, useQueryClient} from '@tanstack/react-query';
-import React, {useCallback, useEffect, useRef, useState, useSyncExternalStore} from 'react';
-import {useTranslation} from 'react-i18next';
-import {useNavigate} from 'react-router-dom';
-import {useShallow} from 'zustand/shallow';
-import {api} from '../../lib/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import React, { useCallback, useEffect, useRef, useState, useSyncExternalStore } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useShallow } from 'zustand/shallow';
+import { api } from '../../lib/api';
 import {
-    getCurrentTime,
-    getDownloadProgress,
-    getDuration,
-    handlePrev,
-    seek,
-    subscribe,
+  getCurrentTime,
+  getDownloadProgress,
+  getDuration,
+  handlePrev,
+  seek,
+  subscribe,
 } from '../../lib/audio';
-import {toggleDislike, useDislikeStatus} from '../../lib/dislikes';
-import {art, formatTime} from '../../lib/formatters';
-import {invalidateAllLikesCache} from '../../lib/hooks';
+import { purgeDislikedFromQueue, toggleDislike, useDislikeStatus } from '../../lib/dislikes';
+import { art, formatTime } from '../../lib/formatters';
 import {
-    audioLines16,
-    Heart,
-    listMusic16,
-    MicVocal,
-    pauseBlack20,
-    playBlack20,
-    repeat1Icon16,
-    repeatAbIcon16,
-    repeatIcon16,
-    shuffleIcon16,
-    skipBack20,
-    skipForward20,
-    slidersHorizontal16,
-    ThumbsDown,
-    volume1Icon16,
-    volume2Icon16,
-    volumeXIcon16,
+  audioLines16,
+  Heart,
+  listMusic16,
+  MicVocal,
+  pauseBlack20,
+  playBlack20,
+  repeat1Icon16,
+  repeatAbIcon16,
+  repeatIcon16,
+  shuffleIcon16,
+  skipBack20,
+  skipForward20,
+  slidersHorizontal16,
+  ThumbsDown,
+  volume1Icon16,
+  volume2Icon16,
+  volumeXIcon16,
 } from '../../lib/icons';
-import {optimisticToggleLike} from '../../lib/likes';
-import {usePerfMode} from '../../lib/perf';
-import {useArtistDisplay, useArtistLinkItems, useDisplayTitle} from '../../lib/track-display';
-import {useLyricsStore} from '../../stores/lyrics';
+import { isUrnLiked, optimisticToggleLike, useLiked } from '../../lib/likes';
+import { usePerfMode } from '../../lib/perf';
+import { isYouTubeUrn } from '../../lib/youtube';
+import { useArtistDisplay, useArtistLinkItems, useDisplayTitle } from '../../lib/track-display';
+import { useLyricsStore } from '../../stores/lyrics';
 import {
-    AB_MIN_GAP,
-    getEffectivePitchSemitones,
-    PITCH_SEMITONES_MAX,
-    PITCH_SEMITONES_MIN,
-    PITCH_SEMITONES_STEP,
-    PLAYBACK_RATE_MAX,
-    PLAYBACK_RATE_MIN,
-    PLAYBACK_RATE_STEP,
-    type Track,
-    usePlayerStore,
+  AB_MIN_GAP,
+  getEffectivePitchSemitones,
+  PITCH_SEMITONES_MAX,
+  PITCH_SEMITONES_MIN,
+  PITCH_SEMITONES_STEP,
+  PLAYBACK_RATE_MAX,
+  PLAYBACK_RATE_MIN,
+  PLAYBACK_RATE_STEP,
+  type Track,
+  usePlayerStore,
 } from '../../stores/player';
-import {useSettingsStore} from '../../stores/settings';
-import {ArtistNameLinks} from '../music/ArtistNameLinks';
-import {EqualizerPanel} from '../music/EqualizerPanel';
-import {UploadKindDot} from '../music/UploadKindDot';
+import { useSettingsStore } from '../../stores/settings';
+import { ArtistNameLinks } from '../music/ArtistNameLinks';
+import { EqualizerPanel } from '../music/EqualizerPanel';
+import { UploadKindDot } from '../music/UploadKindDot';
 
 /* ── Track loading progress (SC → SCD download) ──────────────── */
 
@@ -436,6 +436,8 @@ const PlaybackQualityBadge = React.memo(() => {
   if (!playbackQuality) return null;
 
   const isHq = playbackQuality === 'hq';
+  // «sq» не показываем — только маркер HQ.
+  if (!isHq) return null;
 
   return (
     <div className="flex shrink-0 items-center gap-1.5">
@@ -461,13 +463,18 @@ const PlaybackQualityBadge = React.memo(() => {
 /* ── Like / Dislike buttons ──────────────────────────────────── */
 
 function useTrackReactions(trackUrn: string) {
-  const { data: trackData } = useQuery({
+  const isYt = isYouTubeUrn(trackUrn);
+  const { data } = useQuery({
     queryKey: ['track', trackUrn],
     queryFn: () => api<Track>(`/tracks/${encodeURIComponent(trackUrn)}`),
-    enabled: !!trackUrn,
+    enabled: !!trackUrn && !isYt,
     staleTime: 30_000,
   });
-  return trackData;
+  // YouTube треки сервер не знает — используем метаданные из плейера.
+  const current = usePlayerStore((s) =>
+    isYt && s.currentTrack?.urn === trackUrn ? s.currentTrack : null,
+  );
+  return data ?? current ?? undefined;
 }
 
 function LikeButton({
@@ -481,36 +488,15 @@ function LikeButton({
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const liked = useLiked(trackUrn);
 
-  const [liked, setLiked] = useState<boolean | null>(null);
-  const prevUrn = useRef(trackUrn);
-
-  useEffect(() => {
-    if (prevUrn.current === trackUrn) return;
-    prevUrn.current = trackUrn;
-    setLiked(null);
-  }, [trackUrn]);
-
-  const isLiked = liked ?? trackData?.user_favorite ?? false;
-
-  const toggle = async () => {
-    const next = !isLiked;
-    setLiked(next);
-    if (trackData) optimisticToggleLike(qc, trackData, next);
-    invalidateAllLikesCache();
+  const toggle = () => {
+    if (!trackData) return;
+    const next = !liked;
+    optimisticToggleLike(qc, trackData, next);
 
     if (next && disliked && trackData) {
       toggleDislike(qc, trackData, false);
-    }
-
-    try {
-      await api(`/likes/tracks/${encodeURIComponent(trackUrn)}`, {
-        method: next ? 'POST' : 'DELETE',
-      });
-      qc.invalidateQueries({ queryKey: ['track', trackUrn, 'favoriters'] });
-    } catch {
-      setLiked(!next);
-      if (trackData) optimisticToggleLike(qc, trackData, !next);
     }
   };
 
@@ -520,10 +506,10 @@ function LikeButton({
       onClick={toggle}
       title={t('track.likes')}
       className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 cursor-pointer hover:bg-white/[0.04] ${
-        isLiked ? 'text-accent' : 'text-white/30 hover:text-white/60'
+        liked ? 'text-accent' : 'text-white/30 hover:text-white/60'
       }`}
     >
-      <Heart size={16} fill={isLiked ? 'currentColor' : 'none'} />
+      <Heart size={16} fill={liked ? 'currentColor' : 'none'} />
     </button>
   );
 }
@@ -544,17 +530,11 @@ export function NowBarDislikeButton({
     if (!trackData) return;
     const next = !disliked;
 
-    if (next && trackData.user_favorite) {
+    if (next && isUrnLiked(trackUrn)) {
       optimisticToggleLike(qc, trackData, false);
-      invalidateAllLikesCache();
-      api(`/likes/tracks/${encodeURIComponent(trackUrn)}`, { method: 'DELETE' }).catch(() => {});
     }
 
-    if (next) {
-      const { currentTrack, next: skip } = usePlayerStore.getState();
-      if (currentTrack?.urn === trackUrn) skip();
-    }
-
+    if (next) purgeDislikedFromQueue(trackUrn);
     await toggleDislike(qc, trackData, next);
   };
 
@@ -998,14 +978,16 @@ const ReactCluster = React.memo(() => {
   return <ReactClusterBody urn={urn} />;
 });
 
-// Single track-query + dislike observer shared by both reaction buttons.
+// Single track-query + reaction observers shared by both reaction buttons.
+// Дизлайк не показываем для треков из избранного — антипатия к залайканному.
 const ReactClusterBody = React.memo(({ urn }: { urn: string }) => {
   const trackData = useTrackReactions(urn);
   const disliked = useDislikeStatus(urn);
+  const liked = useLiked(urn);
   return (
     <div className="flex items-center gap-0.5">
       <LikeButton trackUrn={urn} trackData={trackData} disliked={disliked} />
-      <NowBarDislikeButton trackUrn={urn} trackData={trackData} disliked={disliked} />
+      {!liked && <NowBarDislikeButton trackUrn={urn} trackData={trackData} disliked={disliked} />}
       <PlaybackQualityBadge />
     </div>
   );
@@ -1065,8 +1047,10 @@ export const NowPlayingBar = React.memo(
   ({ onQueueToggle, queueOpen }: { onQueueToggle: () => void; queueOpen: boolean }) => {
     const isPlaying = usePlayerStore((s) => s.isPlaying);
     const hidden = useDocHidden();
+    const bar = useSettingsStore((s) => s.barElements);
     const playingNow = isPlaying && !hidden;
     const loadProgress = useLoadProgress();
+    const rightVisible = bar.tuning || bar.eq || bar.lyrics || bar.queue || bar.volume;
 
     return (
       <div className="npb">
@@ -1087,38 +1071,50 @@ export const NowPlayingBar = React.memo(
           <div className="npb-content">
             <div className="npb-row">
               <PillTrack loadProgress={loadProgress} />
-              <ReactCluster />
+              {bar.cluster && <ReactCluster />}
 
-              <div className="npb-sep" />
+              {bar.playback && (
+                <>
+                  <div className="npb-sep" />
+                  <div className="flex items-center gap-0.5">
+                    <ShuffleBtn />
+                    <PrevBtn />
+                    <PlayPauseBtn />
+                    <NextBtn />
+                    <RepeatBtn />
+                    <AbLoopBtn />
+                  </div>
+                </>
+              )}
 
-              <div className="flex items-center gap-0.5">
-                <ShuffleBtn />
-                <PrevBtn />
-                <PlayPauseBtn />
-                <NextBtn />
-                <RepeatBtn />
-                <AbLoopBtn />
-              </div>
-
-              <div className="npb-sep" />
-
-              <div className="flex items-center gap-0.5">
-                <TuningBtn />
-                <EqBtn />
-                <LyricsBtn />
-                <QueueBtn onClick={onQueueToggle} active={queueOpen} />
-                <ControlVolumeBtn size="sm" />
-                <div className="npb-vol-slider flex items-center gap-2 pl-1">
-                  <VolumeSlider className="w-[72px]" />
-                  <VolumeLabel />
-                </div>
-              </div>
+              {rightVisible && (
+                <>
+                  <div className="npb-sep" />
+                  <div className="flex items-center gap-0.5">
+                    {bar.tuning && <TuningBtn />}
+                    {bar.eq && <EqBtn />}
+                    {bar.lyrics && <LyricsBtn />}
+                    {bar.queue && <QueueBtn onClick={onQueueToggle} active={queueOpen} />}
+                    {bar.volume && (
+                      <>
+                        <ControlVolumeBtn size="sm" />
+                        <div className="npb-vol-slider flex items-center gap-2 pl-1">
+                          <VolumeSlider className="w-[72px]" />
+                          <VolumeLabel />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
-            <div className="npb-lane">
-              <LaneTimes />
-              <ProgressSlider />
-            </div>
+            {bar.timeline && (
+              <div className="npb-lane">
+                <LaneTimes />
+                <ProgressSlider />
+              </div>
+            )}
           </div>
         </div>
       </div>

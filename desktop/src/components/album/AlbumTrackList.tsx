@@ -1,12 +1,12 @@
-import {memo, useMemo} from 'react';
-import {useTranslation} from 'react-i18next';
-import {type Aura, auraRgba} from '../../lib/aura';
-import {dur, fc} from '../../lib/formatters';
-import {ListMusic, Music} from '../../lib/icons';
-import {usePerfMode} from '../../lib/perf';
-import {useArtistDisplay, useDisplayTitle} from '../../lib/track-display';
-import type {Track} from '../../stores/player';
-import {AlbumTrackRow} from './AlbumTrackRow';
+import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { type Aura, auraRgba } from '../../lib/aura';
+import { dur, fc } from '../../lib/formatters';
+import { ListMusic, Music } from '../../lib/icons';
+import { usePerfMode } from '../../lib/perf';
+import { useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
+import type { Track } from '../../stores/player';
+import { AlbumTrackRow } from './AlbumTrackRow';
 
 interface AlbumTrackListProps {
   tracks: Track[];

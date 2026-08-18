@@ -22,6 +22,7 @@ pub struct DiscordTrackInfo {
     is_playing: Option<bool>,
     mode: Option<DiscordRpcMode>,
     show_button: Option<bool>,
+    hide_on_pause: Option<bool>,
 }
 
 #[derive(Clone, Copy, serde::Deserialize)]
@@ -82,6 +83,12 @@ pub fn discord_set_activity(
     let is_playing = track.is_playing.unwrap_or(true);
     let mode = track.mode.unwrap_or(DiscordRpcMode::Track);
     let show_button = track.show_button.unwrap_or(true);
+
+    // «Не показывать на паузе» — при паузе вообще убираем presence, не пишем
+    // «Paused» в Discord.
+    if !is_playing && track.hide_on_pause.unwrap_or(false) {
+        return client.clear_activity().map_err(|e| format!("clear_activity: {e}"));
+    }
 
     let large_image = track.artwork_url.as_deref().unwrap_or("soundcloud_logo");
 

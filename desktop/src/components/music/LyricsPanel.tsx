@@ -1,15 +1,16 @@
-import React, {useEffect, useRef} from 'react';
-import {art} from '../../lib/formatters';
-import {useLyricsStore} from '../../stores/lyrics';
-import {usePlayerStore} from '../../stores/player';
-import {useSettingsStore} from '../../stores/settings';
-import {LyricsBackdrop, useArtworkColor} from './lyrics/LyricsBackdrop';
-import {LyricsHeader} from './lyrics/LyricsHeader';
-import {LyricsPane} from './lyrics/LyricsPane';
-import {LyricsVisualizer} from './lyrics/LyricsVisualizer';
-import {SplitDivider} from './lyrics/SplitDivider';
-import {TimedCommentsRail} from './lyrics/TimedComments';
-import {TrackColumn} from './lyrics/TrackColumn';
+import React, { useEffect, useRef } from 'react';
+import { applyAccentVars } from '../../lib/apply-theme';
+import { art } from '../../lib/formatters';
+import { useLyricsStore } from '../../stores/lyrics';
+import { usePlayerStore } from '../../stores/player';
+import { useSettingsStore } from '../../stores/settings';
+import { darkenRgb, LyricsBackdrop, useArtworkColor } from './lyrics/LyricsBackdrop';
+import { LyricsHeader } from './lyrics/LyricsHeader';
+import { LyricsPane } from './lyrics/LyricsPane';
+import { LyricsVisualizer } from './lyrics/LyricsVisualizer';
+import { SplitDivider } from './lyrics/SplitDivider';
+import { TimedCommentsRail } from './lyrics/TimedComments';
+import { TrackColumn } from './lyrics/TrackColumn';
 
 /* ── Lyrics Panel (fullscreen) ────────────────────────────────
  * Thin shell: immersive backdrop (wallpaper-aware) + floating header (close is
@@ -27,9 +28,17 @@ export const LyricsPanel = React.memo(() => {
   const splitRatio = useLyricsStore((s) => s.splitRatio);
   const setSplitRatio = useLyricsStore((s) => s.setSplitRatio);
   const track = usePlayerStore((s) => s.currentTrack);
-  const colorRef = useArtworkColor(track?.artwork_url ?? null);
+  const { color } = useArtworkColor(track?.artwork_url ?? null);
   const splitLayoutRef = useRef<HTMLDivElement>(null);
   const visualizerEnabled = useSettingsStore((s) => s.lyricsVisualizer);
+  const hideTuning = useSettingsStore((s) => s.fullscreenHideTuning);
+
+  useEffect(() => {
+    if (!open) return;
+    const userAccent = useSettingsStore.getState().accentColor;
+    applyAccentVars(darkenRgb(color, 0.72), document.documentElement);
+    return () => applyAccentVars(userAccent, document.documentElement);
+  }, [open, color]);
 
   useEffect(() => {
     if (!open) return;
@@ -47,19 +56,19 @@ export const LyricsPanel = React.memo(() => {
 
   return (
     <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden animate-fade-in-up bg-[#08080a]">
-        <LyricsBackdrop artworkSrc={artwork500} color={colorRef.current}/>
-        {visualizerEnabled && <LyricsVisualizer/>}
+      <LyricsBackdrop artworkSrc={artwork500} color={color} />
+      {visualizerEnabled && <LyricsVisualizer />}
 
-        <LyricsHeader
-            tab={tab}
-            rightPanelOpen={rightPanelOpen}
-            onSelectTab={(next) => {
-                setTab(next);
-                setRightPanelOpen(true);
-            }}
-            onTogglePanel={toggleRightPanel}
-            onClose={close}
-        />
+      <LyricsHeader
+        tab={tab}
+        rightPanelOpen={rightPanelOpen}
+        onSelectTab={(next) => {
+          setTab(next);
+          setRightPanelOpen(true);
+        }}
+        onTogglePanel={toggleRightPanel}
+        onClose={close}
+      />
 
       {rightPanelOpen ? (
         <div
@@ -71,7 +80,7 @@ export const LyricsPanel = React.memo(() => {
           }}
         >
           <div className="min-w-0 min-h-0">
-            <TrackColumn track={track} />
+            <TrackColumn track={track} hideTuning={hideTuning} />
           </div>
 
           <SplitDivider
@@ -90,10 +99,10 @@ export const LyricsPanel = React.memo(() => {
         </div>
       ) : (
         <div
-            className="relative z-10 flex-1 flex items-center justify-center min-h-0 pt-16"
+          className="relative z-10 flex-1 flex items-center justify-center min-h-0 pt-16"
           style={{ isolation: 'isolate' }}
         >
-          <TrackColumn track={track} maxArt="max-w-[420px]" />
+          <TrackColumn track={track} layout="side" hideTuning={hideTuning} />
         </div>
       )}
     </div>

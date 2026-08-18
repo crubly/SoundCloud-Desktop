@@ -7,6 +7,7 @@ mod rt;
 mod scapi;
 mod shared;
 mod track_cache;
+mod yt;
 
 use std::sync::{Arc, Mutex};
 use tauri::Manager;
@@ -123,6 +124,16 @@ pub fn run() {
             let ffmpeg_dir = cache_dir.join("ffmpeg");
             std::fs::create_dir_all(&ffmpeg_dir).ok();
 
+            let yt_dir = cache_dir.join("yt");
+            std::fs::create_dir_all(&yt_dir).ok();
+            let mut yt_state = yt::init(audio_dir.clone(), yt_dir);
+            yt_state.set_app_handle(app.handle().clone());
+            let yt_warm = yt_state.clone();
+            app.manage(yt_state);
+            rt_handle.spawn(async move {
+                yt_warm.binary().await;
+            });
+
             let mut track_cache_state =
                 track_cache::init(audio_dir, liked_audio_dir, incoming_audio_dir);
             track_cache_state.set_app_handle(app.handle().clone());
@@ -189,6 +200,8 @@ pub fn run() {
             audio::audio_set_ab_loop,
             audio::audio_get_position,
             audio::audio_set_eq,
+            audio::audio_set_stereo,
+            audio::audio_set_visualizer,
             audio::audio_set_normalization,
             audio::audio_is_playing,
             audio::audio_set_metadata,
@@ -222,6 +235,9 @@ pub fn run() {
             track_cache::track_cache_likes,
             track_cache::track_cache_likes_running,
             track_cache::track_cancel_cache_likes,
+            yt::yt_search,
+            yt::yt_resolve,
+            yt::yt_ensure_audio,
             network::image_cache::image_cache_size,
             network::image_cache::image_cache_clear,
             auth::auth_status,

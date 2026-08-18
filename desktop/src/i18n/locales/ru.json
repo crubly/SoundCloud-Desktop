@@ -183,9 +183,11 @@
     "source": {
       "db": "SCD",
       "sc": "SoundCloud",
+      "yt": "YouTube",
       "dbBadge": "БД",
       "dbHint": "Поиск в локальной базе SCD — быстро, по уже зеркалированному контенту.",
-      "scHint": "Поиск прямо в SoundCloud — медленнее, но охватывает всё."
+      "scHint": "Поиск прямо в SoundCloud — медленнее, но охватывает всё.",
+      "ytHint": "Поиск по YouTube-видео. Прослушивание — скачивание и конвертация в MP3."
     }
   },
   "sharing": {
@@ -271,7 +273,8 @@
     "feat": "feat.",
     "remix": "ремикс",
     "prod": "prod.",
-    "whoVibes": "Кому зашло"
+    "whoVibes": "Кому зашло",
+    "cachedLyrics": "Кэш (своя лирика)"
   },
   "playlist": {
     "playAll": "Воспроизвести",
@@ -358,7 +361,6 @@
     "freshNew": "Новое",
     "freshEmpty": "Подпишись на артистов — их новые релизы появятся здесь",
     "freshQuiet": "У тех, на кого ты подписан, пока нет свежих релизов — загляни позже",
-    "continue": "Продолжить",
     "seeAll": "Все",
     "artists": "Артисты",
     "likedTracks": "Любимые треки",
@@ -366,12 +368,6 @@
     "yourPlaylists": "Ваши плейлисты",
     "localLikes": "Локальные",
     "noLocalLikes": "Нет локальных лайков",
-    "history": "История",
-    "historyEmpty": "История прослушивания пуста",
-    "clearHistory": "Очистить историю",
-    "today": "Сегодня",
-    "yesterday": "Вчера",
-    "earlier": "Ранее",
     "filter": "Фильтр...",
     "noMatches": "Ничего не найдено",
     "noLikedTracks": "Нет любимых треков",
@@ -415,7 +411,20 @@
     "recommended": "Рекомендации для вас",
     "startListening": "Начните слушать",
     "startLikingTitle": "Лайкайте треки — здесь появится больше музыки",
-    "startLikingDesc": "Чем больше лайков, тем точнее рекомендации и насыщеннее главная страница"
+    "startLikingDesc": "Чем больше лайков, тем точнее рекомендации и насыщеннее главная страница",
+    "discovery": {
+      "badge": "Твоя подборка",
+      "title": "Открытия недели",
+      "subtitle": "Собрано из твоих лайков — любимые жанры и артисты, свежее с SoundCloud.",
+      "tracksCount_one": "{{count}} трек",
+      "tracksCount_few": "{{count}} трека",
+      "tracksCount_many": "{{count}} треков",
+      "play": "Слушать",
+      "shuffle": "Перемешать",
+      "shelfGenre": "Свежее: {{name}}",
+      "shelfArtist": "Ещё от {{name}}",
+      "shelfDesc": "Подобрано для тебя на SoundCloud"
+    }
   },
   "soundwave": {
     "tagline": "Твоя личная волна — подобрали под тебя",
@@ -635,10 +644,14 @@
     "discordRpcModeActivity": "Только активность",
     "discordRpcButton": "Кнопка SoundCloud",
     "discordRpcButtonDesc": "Показывать кнопку перехода к треку в SoundCloud",
+    "discordRpcHidePaused": "Скрывать на паузе",
+    "discordRpcHidePausedDesc": "Убирать присутствие в Discord, когда воспроизведение на паузе",
     "normalizeVolume": "Нормализация громкости",
     "normalizeVolumeDesc": "Выравнивает тихие и громкие треки до более ровного уровня",
     "highQualityStreaming": "Высокое качество стрима",
     "highQualityStreamingDesc": "Стараться воспроизводить треки в максимально доступном качестве",
+    "fullscreenHideTuning": "Скрыть настройку в фуллскрине",
+    "fullscreenHideTuningDesc": "Скрывать регуляторы громкости и скорости в полноэкранной лирике",
     "bypassWhitelist": "Обход белых списков",
     "bypassWhitelistDesc": "Альтернативная маршрутизация при блокировках и отключениях интернета",
     "bypassWhitelistSoon": "Скоро будет",
@@ -669,7 +682,35 @@
     "wpKeyNeeded": "Введи API-ключ Wallhaven, чтобы открыть контент 18+.",
     "bypassWhitelistSoonDesc": "Готовим обход — следите за обновлениями",
     "import": "Импорт",
-    "importYandex": "Импорт из Yandex Music"
+    "importYandex": "Импорт из Yandex Music",
+    "effects": "Эффекты",
+    "effectsAudioEffect": "Аудио-эффект",
+    "effectsAudioEffectDesc": "Глобальный сдвиг темпа и тональности поверх текущего трека.",
+    "effectsOff": "Выкл",
+    "effectsNightcore": "Найткор",
+    "effectsVaporwave": "Вейпорвейв",
+    "effectsStereoWidth": "Ширина стерео",
+    "effectsStereoWidthDesc": "Расширяет стерео-картину (или схлопывает в моно) в реальном времени.",
+    "effectsMono": "Моно",
+    "effectsWide": "Широко",
+    "bar": "Нижняя панель плеера",
+    "barDesc": "Выбирайте, какие элементы показывать в нижней панели плеера.",
+    "bar_playback": "Управление",
+    "bar_playbackDesc": "Перемешивание / назад / play / вперёд / повтор / A-B луп",
+    "bar_tuning": "Настройка",
+    "bar_tuningDesc": "Скорость и тональность",
+    "bar_eq": "Эквалайзер",
+    "bar_eqDesc": "Кнопка панели эквалайзера",
+    "bar_lyrics": "Лирика",
+    "bar_lyricsDesc": "Кнопка фуллскрин лирики",
+    "bar_queue": "Очередь",
+    "bar_queueDesc": "Кнопка очереди воспроизведения",
+    "bar_volume": "Громкость",
+    "bar_volumeDesc": "Кнопка и слайдер громкости",
+    "bar_cluster": "Рекомендации",
+    "bar_clusterDesc": "Предложения похожих треков",
+    "bar_timeline": "Таймлайн",
+    "bar_timelineDesc": "Полоса прогресса с временем"
   },
   "eq": {
     "title": "Эквалайзер",
@@ -961,7 +1002,7 @@
     "discord": {
       "title": "У нас появился Discord!",
       "description": "Присоединяйся — обсуждения, предложения, баг-репорты",
-      "body": "Мы запустили официальный Discord-сервер SoundCloud Desktop!\n\nЗаходи, чтобы общаться с другими пользователями, предлагать фичи, сообщать о багах и быть в курсе последних новостей.\n\nhttps://discord.gg/xQcGBP8fGG"
+      "body": "Мы запустили официальный Discord-сервер SoundCloud!\n\nЗаходи, чтобы общаться с другими пользователями, предлагать фичи, сообщать о багах и быть в курсе последних новостей.\n\nhttps://discord.gg/xQcGBP8fGG"
     }
   },
   "call": {
@@ -1096,5 +1137,22 @@
     "noMatches": "Ничего не нашлось по «{{query}}»",
     "capAlbums": "Это самые яркие. Чтобы копнуть глубже — выбери жанр или поиск.",
     "capArtists": "Это самые яркие. Чтобы копнуть глубже — выбери тег или поиск."
+  },
+  "yt": {
+    "firstTimeTitle": "Ищи видео на YouTube",
+    "firstTimeBody": "Введи название, артиста или ссылку. Прослушивание скачает и сконвертирует видео в MP3.",
+    "errorTitle": "YouTube недоступен",
+    "errorBody": "Не удалось выполнить поиск. Проверь сеть или попробуй позже.",
+    "emptyTitle": "Ничего не нашлось",
+    "emptyBody": "По запросу «{{query}}» на YouTube ничего не нашлось.",
+    "resolve": {
+      "loading": "Готовим аудио из видео…",
+      "errorTitle": "Не удалось разобрать видео"
+    },
+    "state": {
+      "setup": "Подготовка…",
+      "download": "Скачиваем видео…",
+      "convert": "Конвертируем в MP3…"
+    }
   }
 }

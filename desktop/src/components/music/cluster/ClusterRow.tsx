@@ -1,10 +1,10 @@
-import React, {useMemo} from 'react';
-import {ClusterFeedbackProvider} from '../../../lib/recsFeedback';
-import type {Track} from '../../../stores/player';
-import {HorizontalScroll} from '../../ui/HorizontalScroll';
-import {TrackCard} from '../TrackCard';
-import {ClusterHeader} from './ClusterHeader';
-import type {ClusterId} from './types';
+import React, { useMemo } from 'react';
+import { ClusterFeedbackProvider } from '../../../lib/recsFeedback';
+import type { Track } from '../../../stores/player';
+import { HorizontalScroll } from '../../ui/HorizontalScroll';
+import { TrackCard } from '../TrackCard';
+import { ClusterHeader } from './ClusterHeader';
+import type { ClusterId } from './types';
 
 interface Props {
   title: string;

@@ -1,12 +1,12 @@
-import React, {useEffect, useRef} from 'react';
-import {getCurrentTime, getDuration, subscribe} from '../../../lib/audio';
-import {art, dur} from '../../../lib/formatters';
-import {pauseBlack14, playBlack14} from '../../../lib/icons';
-import {useAutoHide} from '../../../lib/useAutoHide';
-import {useTrackPlay} from '../../../lib/useTrackPlay';
-import type {Track} from '../../../stores/player';
-import {sameScdMeta, TrackStatusBadges} from '../TrackStatusBadges';
-import {TrackTitleArtist} from '../TrackTitleArtist';
+import React, { useEffect, useRef } from 'react';
+import { getCurrentTime, getDuration, subscribe } from '../../../lib/audio';
+import { art, dur } from '../../../lib/formatters';
+import { pauseBlack14, playBlack14 } from '../../../lib/icons';
+import { useAutoHide } from '../../../lib/useAutoHide';
+import { useTrackPlay } from '../../../lib/useTrackPlay';
+import type { Track } from '../../../stores/player';
+import { sameScdMeta, TrackStatusBadges } from '../TrackStatusBadges';
+import { TrackTitleArtist } from '../TrackTitleArtist';
 
 function formatMMSS(sec: number): string {
   if (!Number.isFinite(sec) || sec < 0) sec = 0;

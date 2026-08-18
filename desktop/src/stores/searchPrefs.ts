@@ -5,8 +5,9 @@ import { tauriStorage } from '../lib/tauri-storage';
 /**
  * `db` — поиск в локальной базе SCD (быстрее, ограничен зеркалом).
  * `sc` — fan-out в SoundCloud API (медленнее, видит всё).
+ * `yt` — YouTube через yt-dlp (видео-превью 16:9, прослушивание через MP3-конвертацию).
  */
-export type SearchSource = 'db' | 'sc';
+export type SearchSource = 'db' | 'sc' | 'yt';
 
 /**
  * `text` — лексический поиск (название/артист + строчки лирики) с тизером «по вайбу».
@@ -17,8 +18,8 @@ export type SearchMode = 'text' | 'vibe';
 interface SearchPrefsState {
   source: SearchSource;
   setSource: (s: SearchSource) => void;
-    mode: SearchMode;
-    setMode: (m: SearchMode) => void;
+  mode: SearchMode;
+  setMode: (m: SearchMode) => void;
 }
 
 export const useSearchPrefsStore = create<SearchPrefsState>()(
@@ -26,8 +27,8 @@ export const useSearchPrefsStore = create<SearchPrefsState>()(
     (set) => ({
       source: 'db',
       setSource: (source) => set({ source }),
-        mode: 'text',
-        setMode: (mode) => set({mode}),
+      mode: 'text',
+      setMode: (mode) => set({ mode }),
     }),
     {
       name: 'sc-search-prefs',

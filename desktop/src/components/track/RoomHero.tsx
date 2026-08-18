@@ -1,9 +1,9 @@
 import React from 'react';
-import {Trans, useTranslation} from 'react-i18next';
-import {useNavigate} from 'react-router-dom';
-import {art} from '../../lib/formatters';
-import type {Comment} from '../../lib/hooks';
-import {usePerfMode} from '../../lib/perf';
+import { Trans, useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { art } from '../../lib/formatters';
+import type { Comment } from '../../lib/hooks';
+import { usePerfMode } from '../../lib/perf';
 import {
   getArtistDisplay,
   getArtistLinkItems,
@@ -11,14 +11,14 @@ import {
   getDisplayTitle,
   getParticipants,
 } from '../../lib/track-display';
-import type {Track} from '../../stores/player';
-import {ArtistNameLinks} from '../music/ArtistNameLinks';
-import {TrackStatusBadges} from '../music/TrackStatusBadges';
-import {ArtistLinks} from './ArtistLinks';
-import {RoomFloor} from './RoomFloor';
-import {TrackActionRail} from './TrackActionRail';
-import {TrackCover} from './TrackCover';
-import type {TrackAura} from './useTrackAura';
+import type { Track } from '../../stores/player';
+import { ArtistNameLinks } from '../music/ArtistNameLinks';
+import { TrackStatusBadges } from '../music/TrackStatusBadges';
+import { ArtistLinks } from './ArtistLinks';
+import { RoomFloor } from './RoomFloor';
+import { TrackActionRail } from './TrackActionRail';
+import { TrackCover } from './TrackCover';
+import type { TrackAura } from './useTrackAura';
 
 const KIND_TONE: Record<string, string> = {
   original: 'bg-emerald-500/15 text-emerald-300/90',

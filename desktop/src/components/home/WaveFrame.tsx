@@ -1,10 +1,10 @@
-import {memo, type ReactNode} from 'react';
-import {usePerfMode} from '../../lib/perf';
-import {LIBRARY_KEYFRAMES} from '../library/keyframes';
-import type {Soundprint} from '../library/useSoundprint';
-import {Atmosphere} from '../search/Atmosphere';
-import {USER_PAGE_KEYFRAMES} from '../user/keyframes';
-import {PAGE_STAR_SEEDS, StarField} from '../user/StarField';
+import { memo, type ReactNode } from 'react';
+import { usePerfMode } from '../../lib/perf';
+import { LIBRARY_KEYFRAMES } from '../library/keyframes';
+import type { Soundprint } from '../library/useSoundprint';
+import { Atmosphere } from '../search/Atmosphere';
+import { USER_PAGE_KEYFRAMES } from '../user/keyframes';
+import { PAGE_STAR_SEEDS, StarField } from '../user/StarField';
 
 /** Shell for the "Wave" home — a deeper, star-lit room. The genre-aura
  *  atmosphere bleeds to the listener's taste; a viewport-pinned star field

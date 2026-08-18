@@ -4,8 +4,8 @@
 //! путь сами. Четыре слоя обводки как в макете: широкое свечение → среднее →
 //! ядро → бегущий пунктир течения.
 
-import React, {useEffect, useRef, useState} from 'react';
-import {usePerfMode} from '../../../lib/perf';
+import React, { useEffect, useRef, useState } from 'react';
+import { usePerfMode } from '../../../lib/perf';
 
 export type AnchorKind = 'node' | 'branch' | 'delta';
 

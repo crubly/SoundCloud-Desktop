@@ -2,16 +2,12 @@ import { lazy, type ReactNode, Suspense, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import { useShallow } from 'zustand/shallow';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { HostStatusBanner } from './components/host-status/HostStatusBanner';
 import { HostStatusModal } from './components/host-status/HostStatusModal';
 import { AppShell } from './components/layout/AppShell';
-import { SessionRecoveryModal } from './components/SessionRecoveryModal';
 import { ThemeProvider } from './components/ThemeProvider';
-import { ApiError } from './lib/api';
-import { getAppMode, useAppMode, useAppStatusStore } from './stores/app-status';
-import { useAuthStore } from './stores/auth';
+import { useAppStatusStore } from './stores/app-status';
 import { type StartupPage, useSettingsStore } from './stores/settings';
 
 const Home = lazy(() => import('./pages/Home').then((module) => ({ default: module.Home })));
@@ -21,7 +17,6 @@ const Library = lazy(() =>
 const LibraryCollection = lazy(() =>
   import('./pages/LibraryCollection').then((module) => ({ default: module.LibraryCollection })),
 );
-const Login = lazy(() => import('./pages/Login').then((module) => ({ default: module.Login })));
 const PlaylistPage = lazy(() =>
   import('./pages/PlaylistPage').then((module) => ({ default: module.PlaylistPage })),
 );
@@ -47,9 +42,6 @@ const AlbumPage = lazy(() =>
 const Discover = lazy(() =>
   import('./pages/Discover').then((module) => ({ default: module.Discover })),
 );
-const StarPage = lazy(() =>
-  import('./pages/StarPage').then((module) => ({ default: module.StarPage })),
-);
 const NewsToast = lazy(() =>
   import('./components/NewsToast').then((module) => ({ default: module.NewsToast })),
 );
@@ -67,19 +59,8 @@ function StartPageRedirect() {
 }
 
 export default function App() {
-  const { isAuthenticated, hasSession, fetchUser } = useAuthStore(
-    useShallow((s) => ({
-      isAuthenticated: s.isAuthenticated,
-      hasSession: s.hasSession,
-      fetchUser: s.fetchUser,
-    })),
-  );
-  const appMode = useAppMode();
-  const offlineBypass = useAppStatusStore((s) => s.offlineBypass);
-  const canUseMainShell = isAuthenticated || hasSession;
-  // Offline-only shell is the explicit "browse offline" choice from Login — NOT
-  // a fallback for being logged out. An explicit logout always lands on <Login/>.
-  const showOfflineOnlyShell = !canUseMainShell && offlineBypass;
+  // SoundCloud-only build: no login, no account, no subscription. The shell is
+  // always rendered and works against the public SoundCloud API.
 
   useEffect(() => {
     const syncOnline = () => {
@@ -100,40 +81,6 @@ export default function App() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!hasSession || appMode !== 'online') {
-      return;
-    }
-
-    let cancelled = false;
-
-    fetchUser().catch((error) => {
-      if (cancelled) return;
-
-      // Auth-recoverable сбои (401/429/пустой юзер) уже перехвачены в
-      // api-client → recoverSession() (silent renew, при неудаче — модалка).
-      if (error instanceof ApiError) return;
-
-      if (getAppMode() !== 'online') {
-        return;
-      }
-
-      // Logged out while /me was in flight — don't resurrect the session.
-      if (!useAuthStore.getState().hasSession) return;
-
-      console.warn('[Auth] Keeping local session after /me bootstrap failure:', error);
-      useAuthStore.setState({ isAuthenticated: true });
-    });
-
-    void import('./lib/dislikes').then(({ loadAllDislikedIds }) => {
-      if (!cancelled) void loadAllDislikedIds();
-    });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [appMode, fetchUser, hasSession]);
-
   return (
     <ThemeProvider>
       <Toaster
@@ -150,154 +97,114 @@ export default function App() {
           },
         }}
       />
-      <SessionRecoveryModal />
       <BrowserRouter>
-        {/* Внутри Router ради navigate('/offline'); видны и над Login (он тоже в Router). */}
+        {/* Внутри Router ради navigate('/offline'). */}
         <HostStatusModal />
         <HostStatusBanner />
-        {showOfflineOnlyShell ? (
-          <Routes>
-            <Route element={<AppShell />}>
-              <Route index element={<Navigate to="/offline" replace />} />
-              <Route
-                path="offline"
-                element={
-                  <RouteLoader>
-                    <OfflinePage />
-                  </RouteLoader>
-                }
-              />
-              <Route
-                path="settings"
-                element={
-                  <RouteLoader>
-                    <Settings />
-                  </RouteLoader>
-                }
-              />
-              <Route path="*" element={<Navigate to="/offline" replace />} />
-            </Route>
-          </Routes>
-        ) : !canUseMainShell ? (
-          <Suspense fallback={<AppLoadingScreen fullscreen />}>
-            <Login />
-          </Suspense>
-        ) : (
-          <>
-            <Suspense fallback={null}>
-              <NewsToast />
-            </Suspense>
-            <Routes>
-              <Route element={<AppShell />}>
-                <Route index element={<StartPageRedirect />} />
-                <Route
-                  path="home"
-                  element={
-                    <RouteLoader>
-                      <Home />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="search"
-                  element={
-                    <RouteLoader>
-                      <Search />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="library"
-                  element={
-                    <RouteLoader>
-                      <Library />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="library/:section"
-                  element={
-                    <RouteLoader>
-                      <LibraryCollection />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="offline"
-                  element={
-                    <RouteLoader>
-                      <OfflinePage />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="track/:urn"
-                  element={
-                    <RouteLoader>
-                      <TrackPage />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="playlist/:urn"
-                  element={
-                    <RouteLoader>
-                      <PlaylistPage />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="user/:urn"
-                  element={
-                    <RouteLoader>
-                      <UserPage />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="artist/:id"
-                  element={
-                    <RouteLoader>
-                      <ArtistPage />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="album/:id"
-                  element={
-                    <RouteLoader>
-                      <AlbumPage />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="discover"
-                  element={
-                    <RouteLoader>
-                      <Discover />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="star"
-                  element={
-                    <RouteLoader>
-                      <StarPage />
-                    </RouteLoader>
-                  }
-                />
-                <Route
-                  path="settings"
-                  element={
-                    <RouteLoader>
-                      <Settings />
-                    </RouteLoader>
-                  }
-                />
-              </Route>
-            </Routes>
-          </>
-        )}
+        <Suspense fallback={null}>
+          <NewsToast />
+        </Suspense>
+        <Routes>
+          <Route element={<AppShell />}>
+            <Route index element={<StartPageRedirect />} />
+            <Route
+              path="home"
+              element={
+                <RouteLoader>
+                  <Home />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="search"
+              element={
+                <RouteLoader>
+                  <Search />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="library"
+              element={
+                <RouteLoader>
+                  <Library />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="library/:section"
+              element={
+                <RouteLoader>
+                  <LibraryCollection />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="offline"
+              element={
+                <RouteLoader>
+                  <OfflinePage />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="track/:urn"
+              element={
+                <RouteLoader>
+                  <TrackPage />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="playlist/:urn"
+              element={
+                <RouteLoader>
+                  <PlaylistPage />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="user/:urn"
+              element={
+                <RouteLoader>
+                  <UserPage />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="artist/:id"
+              element={
+                <RouteLoader>
+                  <ArtistPage />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="album/:id"
+              element={
+                <RouteLoader>
+                  <AlbumPage />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="discover"
+              element={
+                <RouteLoader>
+                  <Discover />
+                </RouteLoader>
+              }
+            />
+            <Route
+              path="settings"
+              element={
+                <RouteLoader>
+                  <Settings />
+                </RouteLoader>
+              }
+            />
+          </Route>
+        </Routes>
       </BrowserRouter>
     </ThemeProvider>
   );

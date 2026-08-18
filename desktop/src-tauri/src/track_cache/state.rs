@@ -106,7 +106,7 @@ fn is_valid_audio(prefix: &[u8], total_size: u64) -> bool {
     false
 }
 
-fn urn_to_filename(urn: &str) -> String {
+pub(crate) fn urn_to_filename(urn: &str) -> String {
     format!("{}.audio", urn.replace(':', "_"))
 }
 
@@ -964,6 +964,11 @@ impl TrackCacheState {
     /// acquisition failed (transcoding disabled, raw bytes served instead).
     fn ffmpeg(&self) -> Option<PathBuf> {
         self.ffmpeg.lock().ok().and_then(|g| g.clone())
+    }
+
+    /// Public handle on the managed ffmpeg (used by yt-dlp for MP3 conversion).
+    pub fn ffmpeg_path(&self) -> Option<PathBuf> {
+        self.ffmpeg()
     }
 
     /// Acquire ffmpeg (system PATH or download into `install_dir`) and publish it

@@ -183,9 +183,11 @@
     "source": {
       "db": "SCD",
       "sc": "SoundCloud",
+      "yt": "YouTube",
       "dbBadge": "DB",
       "dbHint": "Search inside the local SCD library — fast, scoped to mirrored content.",
-      "scHint": "Search directly on SoundCloud — slower, but covers everything."
+      "scHint": "Search directly on SoundCloud — slower, but covers everything.",
+      "ytHint": "Search YouTube videos. Listening downloads and converts them to MP3."
     }
   },
   "sharing": {
@@ -270,7 +272,8 @@
     "feat": "feat.",
     "remix": "Remix",
     "prod": "prod.",
-    "whoVibes": "Who's vibing"
+    "whoVibes": "Who's vibing",
+    "cachedLyrics": "Cached (custom lyrics)"
   },
   "playlist": {
     "playAll": "Play All",
@@ -354,7 +357,6 @@
     "freshNew": "New",
     "freshEmpty": "Follow some artists — their new releases will land here",
     "freshQuiet": "No recent releases from who you follow — check back later",
-    "continue": "Jump back in",
     "seeAll": "See all",
     "artists": "Artists",
     "likedTracks": "Liked Tracks",
@@ -362,12 +364,6 @@
     "yourPlaylists": "Your Playlists",
     "localLikes": "Local",
     "noLocalLikes": "No local likes yet",
-    "history": "History",
-    "historyEmpty": "No listening history",
-    "clearHistory": "Clear history",
-    "today": "Today",
-    "yesterday": "Yesterday",
-    "earlier": "Earlier",
     "filter": "Filter...",
     "noMatches": "No matches",
     "noLikedTracks": "No liked tracks yet",
@@ -411,7 +407,19 @@
     "recommended": "Recommended For You",
     "startListening": "Start Listening",
     "startLikingTitle": "Like tracks — more music will appear here",
-    "startLikingDesc": "The more likes, the better recommendations and richer home page"
+    "startLikingDesc": "The more likes, the better recommendations and richer home page",
+    "discovery": {
+      "badge": "Your picks",
+      "title": "Discover of the week",
+      "subtitle": "Built from your likes — favourite genres and artists, freshly searched on SoundCloud.",
+      "tracksCount_one": "{{count}} track",
+      "tracksCount_other": "{{count}} tracks",
+      "play": "Play",
+      "shuffle": "Shuffle",
+      "shelfGenre": "Fresh: {{name}}",
+      "shelfArtist": "More from {{name}}",
+      "shelfDesc": "Picked for you from SoundCloud"
+    }
   },
   "soundwave": {
     "tagline": "Your personal radio — picked just for you",
@@ -625,10 +633,14 @@
     "discordRpcModeActivity": "Activity only",
     "discordRpcButton": "Show SoundCloud button",
     "discordRpcButtonDesc": "Display the button that opens the track in SoundCloud",
+    "discordRpcHidePaused": "Hide while paused",
+    "discordRpcHidePausedDesc": "Remove the Discord presence when playback is paused",
     "normalizeVolume": "Volume normalization",
     "normalizeVolumeDesc": "Balances quiet and loud tracks to a more even level",
     "highQualityStreaming": "High quality streaming",
     "highQualityStreamingDesc": "Prefer the highest available quality during playback",
+    "fullscreenHideTuning": "Hide tuning in fullscreen",
+    "fullscreenHideTuningDesc": "Hide the volume and playback-rate controls in the immersive lyrics view",
     "bypassWhitelist": "Bypass whitelists",
     "bypassWhitelistDesc": "Alternative routing for network restrictions and outages (Russia)",
     "bypassWhitelistSoon": "Coming soon",
@@ -659,7 +671,35 @@
     "wpKeyNeeded": "Enter your Wallhaven API key to unlock 18+ results.",
     "bypassWhitelistSoonDesc": "We're shipping bypass routing — stay tuned",
     "import": "Import",
-    "importYandex": "Import from Yandex Music"
+    "importYandex": "Import from Yandex Music",
+    "effects": "Effects",
+    "effectsAudioEffect": "Audio effect",
+    "effectsAudioEffectDesc": "A global tempo & pitch shift on top of the current track.",
+    "effectsOff": "Off",
+    "effectsNightcore": "Nightcore",
+    "effectsVaporwave": "Vaporwave",
+    "effectsStereoWidth": "Stereo width",
+    "effectsStereoWidthDesc": "Widen (or collapse to mono) the stereo image in real time.",
+    "effectsMono": "Mono",
+    "effectsWide": "Wide",
+    "bar": "Now playing bar",
+    "barDesc": "Choose which elements appear in the bottom player bar.",
+    "bar_playback": "Playback controls",
+    "bar_playbackDesc": "Shuffle / previous / play / next / repeat / A-B loop",
+    "bar_tuning": "Tuning",
+    "bar_tuningDesc": "Speed and pitch controls",
+    "bar_eq": "Equalizer",
+    "bar_eqDesc": "EQ panel button",
+    "bar_lyrics": "Lyrics",
+    "bar_lyricsDesc": "Fullscreen lyrics button",
+    "bar_queue": "Queue",
+    "bar_queueDesc": "Play queue button",
+    "bar_volume": "Volume",
+    "bar_volumeDesc": "Volume button and slider",
+    "bar_cluster": "Recommendations cluster",
+    "bar_clusterDesc": "Related tracks suggestions",
+    "bar_timeline": "Timeline",
+    "bar_timelineDesc": "Progress bar with times"
   },
   "eq": {
     "title": "Equalizer",
@@ -950,7 +990,7 @@
     "discord": {
       "title": "We have a Discord server!",
       "description": "Join our community — discuss, suggest features, report bugs",
-      "body": "We've launched an official Discord server for SoundCloud Desktop!\n\nJoin to chat with other users, suggest new features, report bugs, and stay up to date with the latest news.\n\nhttps://discord.gg/xQcGBP8fGG"
+      "body": "We've launched an official Discord server for SoundCloud!\n\nJoin to chat with other users, suggest new features, report bugs, and stay up to date with the latest news.\n\nhttps://discord.gg/xQcGBP8fGG"
     }
   },
   "call": {
@@ -1077,5 +1117,22 @@
     "noMatches": "Nothing matches “{{query}}”",
     "capAlbums": "That's the cream of the crop — narrow the genre or search to dig deeper.",
     "capArtists": "That's the cream of the crop — pick a tag or search to dig deeper."
+  },
+  "yt": {
+    "firstTimeTitle": "Search YouTube videos",
+    "firstTimeBody": "Type a name, artist or link. Listening downloads and converts the video to MP3.",
+    "errorTitle": "YouTube unavailable",
+    "errorBody": "The search failed. Check the network or try again later.",
+    "emptyTitle": "Nothing found",
+    "emptyBody": "Nothing matched “{{query}}” on YouTube.",
+    "resolve": {
+      "loading": "Preparing audio from the video…",
+      "errorTitle": "Couldn't parse the video"
+    },
+    "state": {
+      "setup": "Preparing…",
+      "download": "Downloading video…",
+      "convert": "Converting to MP3…"
+    }
   }
 }

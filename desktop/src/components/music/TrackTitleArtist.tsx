@@ -1,10 +1,10 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-import {useNavigate} from 'react-router-dom';
-import {useArtistDisplay, useArtistLinkItems, useDisplayTitle} from '../../lib/track-display';
-import type {Track} from '../../stores/player';
-import {ArtistNameLinks} from './ArtistNameLinks';
-import {UploadKindDot} from './UploadKindDot';
+import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
+import { useArtistDisplay, useArtistLinkItems, useDisplayTitle } from '../../lib/track-display';
+import type { Track } from '../../stores/player';
+import { ArtistNameLinks } from './ArtistNameLinks';
+import { UploadKindDot } from './UploadKindDot';
 
 interface TrackTitleArtistProps {
   track: Track;

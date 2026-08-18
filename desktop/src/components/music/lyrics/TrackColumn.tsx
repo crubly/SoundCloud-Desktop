@@ -1,20 +1,20 @@
-import React, {useEffect, useRef, useState} from 'react';
-import {createPortal} from 'react-dom';
-import {useTranslation} from 'react-i18next';
-import {art} from '../../../lib/formatters';
-import {Eye, MicVocal, X} from '../../../lib/icons';
-import {useArtistDisplay, useArtistLinkItems, useDisplayTitle} from '../../../lib/track-display';
-import type {Track} from '../../../stores/player';
+import React, { useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { useTranslation } from 'react-i18next';
+import { art } from '../../../lib/formatters';
+import { Eye, MicVocal, X } from '../../../lib/icons';
+import { useArtistDisplay, useArtistLinkItems, useDisplayTitle } from '../../../lib/track-display';
+import type { Track } from '../../../stores/player';
 import {
-    ControlVolumeBtn,
-    PlaybackRateSlider,
-    ProgressSlider,
-    ProgressTime,
-    VolumeLabel,
-    VolumeSlider,
+  ControlVolumeBtn,
+  PlaybackRateSlider,
+  ProgressSlider,
+  ProgressTime,
+  VolumeLabel,
+  VolumeSlider,
 } from '../../layout/NowPlayingBar';
-import {ArtistNameLinks} from '../ArtistNameLinks';
-import {Controls} from './LyricsControls';
+import { ArtistNameLinks } from '../ArtistNameLinks';
+import { Controls } from './LyricsControls';
 
 const ArtworkViewModal = React.memo(
   ({
@@ -81,137 +81,173 @@ const ArtworkViewModal = React.memo(
   },
 );
 
-export const TrackColumn = React.memo(({ track, maxArt }: { track: Track; maxArt?: string }) => {
-  const { t } = useTranslation();
-  const artwork500 = art(track.artwork_url, 't500x500');
-  const artwork200 = art(track.artwork_url, 't200x200');
-  const artistDisplay = useArtistDisplay(track);
-  const artistLinks = useArtistLinkItems(track);
-  const displayTitle = useDisplayTitle(track);
-  const [loaded, setLoaded] = useState(false);
-  const [isSwitching, setIsSwitching] = useState(false);
-  const [showFullArt, setShowFullArt] = useState(false);
-  const switchTimerRef = useRef<number | null>(null);
+export const TrackColumn = React.memo(
+  ({
+    track,
+    maxArt,
+    layout = 'stack',
+    hideTuning = false,
+  }: {
+    track: Track;
+    maxArt?: string;
+    layout?: 'stack' | 'side';
+    hideTuning?: boolean;
+  }) => {
+    const { t } = useTranslation();
+    const artwork500 = art(track.artwork_url, 't500x500');
+    const artwork200 = art(track.artwork_url, 't200x200');
+    const artistDisplay = useArtistDisplay(track);
+    const artistLinks = useArtistLinkItems(track);
+    const displayTitle = useDisplayTitle(track);
+    const [loaded, setLoaded] = useState(false);
+    const [isSwitching, setIsSwitching] = useState(false);
+    const [showFullArt, setShowFullArt] = useState(false);
+    const switchTimerRef = useRef<number | null>(null);
 
-  const prevUrlRef = useRef(track.artwork_url);
-  if (prevUrlRef.current !== track.artwork_url) {
-    prevUrlRef.current = track.artwork_url;
-    setLoaded(false);
-    setShowFullArt(false);
-    if (artwork200 && artwork500 && artwork200 !== artwork500) {
-      setIsSwitching(true);
-    }
-  }
-
-  useEffect(() => {
-    if (!isSwitching) return;
-    if (switchTimerRef.current !== null) window.clearTimeout(switchTimerRef.current);
-    switchTimerRef.current = window.setTimeout(() => {
-      setIsSwitching(false);
-      switchTimerRef.current = null;
-    }, 900);
-    return () => {
-      if (switchTimerRef.current !== null) {
-        window.clearTimeout(switchTimerRef.current);
-        switchTimerRef.current = null;
+    const prevUrlRef = useRef(track.artwork_url);
+    if (prevUrlRef.current !== track.artwork_url) {
+      prevUrlRef.current = track.artwork_url;
+      setLoaded(false);
+      setShowFullArt(false);
+      if (artwork200 && artwork500 && artwork200 !== artwork500) {
+        setIsSwitching(true);
       }
-    };
-  }, [isSwitching]);
+    }
 
-  const widthClass = `w-full ${maxArt ?? 'max-w-[360px]'}`;
+    useEffect(() => {
+      if (!isSwitching) return;
+      if (switchTimerRef.current !== null) window.clearTimeout(switchTimerRef.current);
+      switchTimerRef.current = window.setTimeout(() => {
+        setIsSwitching(false);
+        switchTimerRef.current = null;
+      }, 900);
+      return () => {
+        if (switchTimerRef.current !== null) {
+          window.clearTimeout(switchTimerRef.current);
+          switchTimerRef.current = null;
+        }
+      };
+    }, [isSwitching]);
 
-  return (
-    <div className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-[clamp(8px,1.4vh,22px)] overflow-y-auto scrollbar-hide px-12 py-6">
-      <div
-        className={`${widthClass} aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/60 ring-1 ring-white/[0.08] relative group/art`}
-      >
-        {artwork500 ? (
-          <>
-            <img
-              src={artwork200 || artwork500}
-              alt=""
-              decoding="async"
-              className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-[var(--ease-apple)] ${
-                isSwitching ? 'blur-2xl scale-125' : 'scale-110'
-              } ${loaded ? 'opacity-0' : 'opacity-100'}`}
-            />
-            <img
-              src={artwork500}
-              alt=""
-              decoding="async"
-              onLoad={() => {
-                setLoaded(true);
-                setIsSwitching(false);
-              }}
-              className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-[var(--ease-apple)] ${loaded ? 'opacity-100' : 'opacity-0'}`}
-            />
-            <button
-              type="button"
-              onClick={() => setShowFullArt(true)}
-              className="absolute inset-0 bg-black/40 opacity-0 group-hover/art:opacity-100 transition-opacity duration-300 flex items-center justify-center text-white/90 backdrop-blur-[2px] cursor-pointer outline-none"
-            >
-              <div className="flex flex-col items-center gap-2 scale-90 group-hover/art:scale-100 transition-transform duration-300">
-                <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center border border-white/20">
-                  <Eye size={24} />
+    const widthClass = layout === 'side' ? 'w-full' : `w-full ${maxArt ?? 'max-w-[360px]'}`;
+
+    const artworkBlock = (
+      <>
+        <div
+          className={`${widthClass} aspect-square rounded-2xl overflow-hidden shadow-2xl shadow-black/60 ring-1 ring-white/[0.08] relative group/art`}
+        >
+          {artwork500 ? (
+            <>
+              <img
+                src={artwork200 || artwork500}
+                alt=""
+                decoding="async"
+                className={`absolute inset-0 w-full h-full object-cover transition-all duration-700 ease-[var(--ease-apple)] ${
+                  isSwitching ? 'blur-2xl scale-125' : 'scale-110'
+                } ${loaded ? 'opacity-0' : 'opacity-100'}`}
+              />
+              <img
+                src={artwork500}
+                alt=""
+                decoding="async"
+                onLoad={() => {
+                  setLoaded(true);
+                  setIsSwitching(false);
+                }}
+                className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ease-[var(--ease-apple)] ${loaded ? 'opacity-100' : 'opacity-0'}`}
+              />
+              <button
+                type="button"
+                onClick={() => setShowFullArt(true)}
+                className="absolute inset-0 bg-black/40 opacity-0 group-hover/art:opacity-100 transition-opacity duration-300 flex items-center justify-center text-white/90 backdrop-blur-[2px] cursor-pointer outline-none"
+              >
+                <div className="flex flex-col items-center gap-2 scale-90 group-hover/art:scale-100 transition-transform duration-300">
+                  <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center border border-white/20">
+                    <Eye size={24} />
+                  </div>
+                  <span className="text-[11px] font-bold tracking-wider uppercase opacity-70">
+                    {t('track.viewArtwork')}
+                  </span>
                 </div>
-                <span className="text-[11px] font-bold tracking-wider uppercase opacity-70">
-                  {t('track.viewArtwork')}
-                </span>
-              </div>
-            </button>
-          </>
-        ) : (
-          <div className="w-full h-full bg-gradient-to-br from-white/[0.06] to-white/[0.02] flex items-center justify-center">
-            <MicVocal size={48} className="text-white/10" />
-          </div>
-        )}
-      </div>
-
-      {showFullArt && artwork500 && (
-        <ArtworkViewModal
-          src={artwork500}
-          title={displayTitle}
-          subtitle={artistDisplay.primary}
-          onClose={() => setShowFullArt(false)}
-        />
-      )}
-
-      <div className={`${widthClass} text-center space-y-1`}>
-        <div className="flex items-center justify-center gap-2 min-w-0">
-          <p className="text-[18px] font-bold text-white/95 truncate">{displayTitle}</p>
-          {track.access === 'preview' && (
-            <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400/90 px-1.5 py-px rounded">
-              Preview
-            </span>
+              </button>
+            </>
+          ) : (
+            <div className="w-full h-full bg-gradient-to-br from-white/[0.06] to-white/[0.02] flex items-center justify-center">
+              <MicVocal size={48} className="text-white/10" />
+            </div>
           )}
         </div>
-        <p className="text-[14px] text-white/40 truncate">
-          <ArtistNameLinks
-            items={artistLinks}
-            linkClassName="cursor-pointer transition-colors hover:text-white/70"
+
+        {showFullArt && artwork500 && (
+          <ArtworkViewModal
+            src={artwork500}
+            title={displayTitle}
+            subtitle={artistDisplay.primary}
+            onClose={() => setShowFullArt(false)}
           />
-        </p>
-      </div>
+        )}
+      </>
+    );
 
-      <div className={widthClass}>
-        <ProgressSlider />
-        <div className="flex justify-center mt-1">
-          <ProgressTime />
+    const infoBlock = (
+      <>
+        <div className={`${widthClass} text-center space-y-1`}>
+          <div className="flex items-center justify-center gap-2 min-w-0">
+            <p className="text-[18px] font-bold text-white/95 truncate">{displayTitle}</p>
+            {track.access === 'preview' && (
+              <span className="shrink-0 text-[9px] font-semibold uppercase tracking-wide bg-amber-500/20 text-amber-400/90 px-1.5 py-px rounded">
+                Preview
+              </span>
+            )}
+          </div>
+          <p className="text-[14px] text-white/40 truncate">
+            <ArtistNameLinks
+              items={artistLinks}
+              linkClassName="cursor-pointer transition-colors hover:text-white/70"
+            />
+          </p>
         </div>
-      </div>
 
-      <Controls track={track} />
-
-      <div
-        className={`${widthClass} flex flex-col gap-2 rounded-[22px] border border-white/[0.07] bg-black/30 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.30)] backdrop-blur-xl`}
-      >
-        <div className="flex items-center gap-2">
-          <ControlVolumeBtn size="sm" />
-          <VolumeSlider className="flex-1" />
-          <VolumeLabel />
+        <div className={widthClass}>
+          <ProgressSlider />
+          <div className="flex justify-center mt-1">
+            <ProgressTime />
+          </div>
         </div>
-        <PlaybackRateSlider />
+
+        <Controls track={track} />
+
+        {!hideTuning && (
+          <div
+            className={`${widthClass} flex flex-col gap-2 rounded-[22px] border border-white/[0.07] bg-black/30 p-3 shadow-[0_18px_60px_rgba(0,0,0,0.30)] backdrop-blur-xl`}
+          >
+            <div className="flex items-center gap-2">
+              <ControlVolumeBtn size="sm" />
+              <VolumeSlider className="flex-1" />
+              <VolumeLabel />
+            </div>
+            <PlaybackRateSlider />
+          </div>
+        )}
+      </>
+    );
+
+    if (layout === 'side') {
+      return (
+        <div className="flex h-full min-h-0 w-full flex-row items-center justify-center gap-[clamp(28px,5vw,72px)] overflow-y-auto scrollbar-hide px-12 py-6">
+          <div className="w-[min(44vw,60vh)] max-w-[620px] shrink-0">{artworkBlock}</div>
+          <div className="flex w-[min(400px,30vw)] min-w-0 flex-col items-center gap-[clamp(8px,1.4vh,22px)]">
+            {infoBlock}
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="flex h-full min-h-0 w-full flex-col items-center justify-center gap-[clamp(8px,1.4vh,22px)] overflow-y-auto scrollbar-hide px-12 py-6">
+        {artworkBlock}
+        {infoBlock}
       </div>
-    </div>
-  );
-});
+    );
+  },
+);

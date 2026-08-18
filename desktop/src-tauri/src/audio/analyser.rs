@@ -39,6 +39,10 @@ pub struct AnalyserBuffer {
     samples: Mutex<VecDeque<f32>>,
     pub sample_rate: AtomicU32,
     pub running: AtomicBool,
+    /// Spectrum is only needed when a visualizer (fullscreen lyrics VU) is open.
+    /// When off, the sample tap skips the push and the FFT loop does no work —
+    /// saves the per-frame lock/push churn + 30Hz FFT during normal playback.
+    pub enabled: AtomicBool,
 }
 
 impl AnalyserBuffer {
@@ -47,6 +51,7 @@ impl AnalyserBuffer {
             samples: Mutex::new(VecDeque::with_capacity(RING_CAPACITY)),
             sample_rate: AtomicU32::new(44_100),
             running: AtomicBool::new(true),
+            enabled: AtomicBool::new(false),
         })
     }
 }
@@ -83,6 +88,13 @@ impl<S: Source<Item = f32>> Iterator for AnalyserSource<S> {
 
     fn next(&mut self) -> Option<f32> {
         let sample = self.source.next()?;
+
+        // Spectrum tap off (no visualizer open): skip accumulation and the per-frame
+        // lock/push entirely — the hot path stays a straight sample-through.
+        if !self.buffer.enabled.load(Ordering::Relaxed) {
+            return Some(sample);
+        }
+
         self.accum += sample;
         self.cur_channel += 1;
 
@@ -151,6 +163,9 @@ fn run_fft_loop(app: AppHandle, buffer: Arc<AnalyserBuffer>) {
         std::thread::sleep(Duration::from_millis(FFT_INTERVAL_MS));
         if !buffer.running.load(Ordering::Relaxed) {
             break;
+        }
+        if !buffer.enabled.load(Ordering::Relaxed) {
+            continue;
         }
 
         let snapshot: Option<Vec<f32>> = {

@@ -1,11 +1,11 @@
-import React, {useMemo} from 'react';
-import {art, dur} from '../../../lib/formatters';
-import {playWhite14} from '../../../lib/icons';
-import {ClusterFeedbackProvider} from '../../../lib/recsFeedback';
-import type {Track} from '../../../stores/player';
-import {usePlayerStore} from '../../../stores/player';
-import type {ClusterHydrated, ClusterNeighborDto} from '../../music/cluster';
-import {HorizontalScroll} from '../../ui/HorizontalScroll';
+import React, { useMemo } from 'react';
+import { art, dur } from '../../../lib/formatters';
+import { playWhite14 } from '../../../lib/icons';
+import { ClusterFeedbackProvider } from '../../../lib/recsFeedback';
+import type { Track } from '../../../stores/player';
+import { usePlayerStore } from '../../../stores/player';
+import type { ClusterHydrated, ClusterNeighborDto } from '../../music/cluster';
+import { HorizontalScroll } from '../../ui/HorizontalScroll';
 
 /** «Твои артисты» — отмель: круги на линии воды. Клик играет очередь из лучших
  *  треков артиста (resolveQueue — тот же контракт, что у NeighborCard). */

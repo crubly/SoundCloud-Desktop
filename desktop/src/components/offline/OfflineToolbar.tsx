@@ -1,9 +1,9 @@
 import * as Popover from '@radix-ui/react-popover';
-import React, {useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {Check, ChevronDown, playWhite12, Search, Shuffle, X} from '../../lib/icons';
-import {usePerfMode} from '../../lib/perf';
-import type {OfflineSection, SortMode} from './types';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Check, ChevronDown, playWhite12, Search, Shuffle, X } from '../../lib/icons';
+import { usePerfMode } from '../../lib/perf';
+import type { OfflineSection, SortMode } from './types';
 
 const SORT_MODES: SortMode[] = ['custom', 'recent', 'title', 'artist', 'duration', 'size'];
 

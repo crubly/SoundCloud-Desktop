@@ -19,7 +19,7 @@ export interface CatalogArtist {
   album_count: number;
   monthly_listeners: number;
   trending: number;
-    popularity: number;
+  popularity: number;
   tags: string[];
   star: boolean;
   aura_id?: AuraId | 'custom' | null;

@@ -1,11 +1,32 @@
-import {create} from 'zustand';
-import {createJSONStorage, persist} from 'zustand/middleware';
-import type {PerfMode} from '../lib/perf';
-import {tauriStorage} from '../lib/tauri-storage';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+import type { PerfMode } from '../lib/perf';
+import { tauriStorage } from '../lib/tauri-storage';
 
 export type ThemePreset = 'soundcloud' | 'dark' | 'neon' | 'forest' | 'crimson' | 'custom';
 export type StartupPage = 'home' | 'search' | 'library' | 'settings';
 export type DiscordRpcMode = 'track' | 'artist' | 'activity';
+export type AudioEffect = 'off' | 'nightcore' | 'vaporwave';
+export interface BarElements {
+  playback: boolean;
+  tuning: boolean;
+  eq: boolean;
+  lyrics: boolean;
+  queue: boolean;
+  volume: boolean;
+  cluster: boolean;
+  timeline: boolean;
+}
+export const BAR_ELEMENT_KEYS = [
+  'playback',
+  'tuning',
+  'eq',
+  'lyrics',
+  'queue',
+  'volume',
+  'cluster',
+  'timeline',
+] as const satisfies ReadonlyArray<keyof BarElements>;
 export interface SidebarPinnedPlaylist {
   urn: string;
   title: string;
@@ -78,6 +99,7 @@ export interface SettingsState {
   discordRpcEnabled: boolean;
   discordRpcMode: DiscordRpcMode;
   discordRpcShowButton: boolean;
+  discordRpcHidePaused: boolean;
   soundwaveLanguages: string[];
   soundwaveMode: 'similar' | 'diverse';
   soundwaveHideLiked: boolean;
@@ -85,6 +107,10 @@ export interface SettingsState {
   lyricsVisualizer: boolean;
   artistWaveCollapsed: boolean;
   wallhavenApiKey: string;
+  fullscreenHideTuning: boolean;
+  audioEffect: AudioEffect;
+  stereoWidth: number;
+  barElements: BarElements;
   setAccentColor: (color: string) => void;
   setBgPrimary: (bg: string) => void;
   setThemePreset: (id: ThemePreset) => void;
@@ -111,6 +137,7 @@ export interface SettingsState {
   setDiscordRpcEnabled: (enabled: boolean) => void;
   setDiscordRpcMode: (mode: DiscordRpcMode) => void;
   setDiscordRpcShowButton: (show: boolean) => void;
+  setDiscordRpcHidePaused: (hide: boolean) => void;
   setSoundwaveLanguages: (langs: string[]) => void;
   setSoundwaveMode: (mode: 'similar' | 'diverse') => void;
   setSoundwaveHideLiked: (v: boolean) => void;
@@ -118,6 +145,10 @@ export interface SettingsState {
   setLyricsVisualizer: (v: boolean) => void;
   setArtistWaveCollapsed: (v: boolean) => void;
   setWallhavenApiKey: (key: string) => void;
+  setFullscreenHideTuning: (v: boolean) => void;
+  setAudioEffect: (effect: AudioEffect) => void;
+  setStereoWidth: (width: number) => void;
+  setBarElement: (key: keyof BarElements, value: boolean) => void;
   resetTheme: () => void;
 }
 
@@ -127,7 +158,7 @@ const DEFAULTS = {
   accentColor: '#ff5500',
   bgPrimary: '#08080a',
   themePreset: 'soundcloud' as ThemePreset,
-  perfMode: 'beauty' as PerfMode,
+  perfMode: 'medium' as PerfMode,
   backgroundImage: '',
   backgroundOpacity: 0.15,
   backgroundDim: 0,
@@ -148,6 +179,7 @@ const DEFAULTS = {
   discordRpcEnabled: true,
   discordRpcMode: 'track' as DiscordRpcMode,
   discordRpcShowButton: true,
+  discordRpcHidePaused: true,
   soundwaveLanguages: [] as string[],
   soundwaveMode: 'similar' as 'similar' | 'diverse',
   soundwaveHideLiked: false,
@@ -155,6 +187,19 @@ const DEFAULTS = {
   lyricsVisualizer: false,
   artistWaveCollapsed: false,
   wallhavenApiKey: '',
+  fullscreenHideTuning: true,
+  audioEffect: 'off' as AudioEffect,
+  stereoWidth: 1,
+  barElements: {
+    playback: true,
+    tuning: true,
+    eq: true,
+    lyrics: true,
+    queue: true,
+    volume: true,
+    cluster: true,
+    timeline: true,
+  },
 };
 
 export const useSettingsStore = create<SettingsState>()(
@@ -208,6 +253,7 @@ export const useSettingsStore = create<SettingsState>()(
       setDiscordRpcEnabled: (discordRpcEnabled) => set({ discordRpcEnabled }),
       setDiscordRpcMode: (discordRpcMode) => set({ discordRpcMode }),
       setDiscordRpcShowButton: (discordRpcShowButton) => set({ discordRpcShowButton }),
+      setDiscordRpcHidePaused: (discordRpcHidePaused) => set({ discordRpcHidePaused }),
       setSoundwaveLanguages: (soundwaveLanguages) => set({ soundwaveLanguages }),
       setSoundwaveMode: (soundwaveMode) => set({ soundwaveMode }),
       setSoundwaveHideLiked: (soundwaveHideLiked) => set({ soundwaveHideLiked }),
@@ -215,6 +261,11 @@ export const useSettingsStore = create<SettingsState>()(
       setLyricsVisualizer: (lyricsVisualizer) => set({ lyricsVisualizer }),
       setArtistWaveCollapsed: (artistWaveCollapsed) => set({ artistWaveCollapsed }),
       setWallhavenApiKey: (wallhavenApiKey) => set({ wallhavenApiKey }),
+      setFullscreenHideTuning: (fullscreenHideTuning) => set({ fullscreenHideTuning }),
+      setAudioEffect: (audioEffect) => set({ audioEffect }),
+      setStereoWidth: (stereoWidth) => set({ stereoWidth }),
+      setBarElement: (key, value) =>
+        set((s) => ({ barElements: { ...s.barElements, [key]: value } })),
       resetTheme: () =>
         set({
           accentColor: DEFAULTS.accentColor,
@@ -230,7 +281,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'sc-settings',
       storage: createJSONStorage(() => tauriStorage),
-      version: 19,
+      version: 23,
       migrate: (persistedState) => {
         const prev = (persistedState ?? {}) as Partial<SettingsState> & {
           soundwaveDiversity?: number;
@@ -241,10 +292,13 @@ export const useSettingsStore = create<SettingsState>()(
           typeof prev.soundwaveDiversity === 'number' && prev.soundwaveDiversity > 0.5
             ? 'diverse'
             : 'similar';
+        // v23: новый дефолт производительности — medium (меньше блюра/частиц,
+        // заметно меньший нагрев). Красоту можно вернуть в Настройки → Оформление.
         return {
           ...DEFAULTS,
           ...prev,
           soundwaveMode: prev.soundwaveMode ?? inferredMode,
+          perfMode: prev.perfMode === undefined ? DEFAULTS.perfMode : 'medium',
         } as SettingsState;
       },
       partialize: (s) => ({
@@ -272,6 +326,7 @@ export const useSettingsStore = create<SettingsState>()(
         discordRpcEnabled: s.discordRpcEnabled,
         discordRpcMode: s.discordRpcMode,
         discordRpcShowButton: s.discordRpcShowButton,
+        discordRpcHidePaused: s.discordRpcHidePaused,
         soundwaveLanguages: s.soundwaveLanguages,
         soundwaveMode: s.soundwaveMode,
         soundwaveHideLiked: s.soundwaveHideLiked,
@@ -279,6 +334,10 @@ export const useSettingsStore = create<SettingsState>()(
         lyricsVisualizer: s.lyricsVisualizer,
         artistWaveCollapsed: s.artistWaveCollapsed,
         wallhavenApiKey: s.wallhavenApiKey,
+        fullscreenHideTuning: s.fullscreenHideTuning,
+        audioEffect: s.audioEffect,
+        stereoWidth: s.stereoWidth,
+        barElements: s.barElements,
       }),
     },
   ),

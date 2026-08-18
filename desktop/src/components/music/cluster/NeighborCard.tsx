@@ -1,16 +1,20 @@
-import React, {useState} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {useShallow} from 'zustand/shallow';
-import {art} from '../../../lib/formatters';
-import {Loader2, pauseBlack14, playBlack14} from '../../../lib/icons';
-import {usePerfMode} from '../../../lib/perf';
-import {recordClusterFeedback, setUrnCluster, useClusterFeedback,} from '../../../lib/recsFeedback';
-import {useArtistLinkItems, useDisplayTitle} from '../../../lib/track-display';
-import {useAutoHide} from '../../../lib/useAutoHide';
-import {type Track, usePlayerStore} from '../../../stores/player';
-import {ArtistNameLinks} from '../ArtistNameLinks';
-import {TrackStatusBadges} from '../TrackStatusBadges';
-import type {ClusterNeighborDto} from './types';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { useShallow } from 'zustand/shallow';
+import { art } from '../../../lib/formatters';
+import { Loader2, pauseBlack14, playBlack14 } from '../../../lib/icons';
+import { usePerfMode } from '../../../lib/perf';
+import {
+  recordClusterFeedback,
+  setUrnCluster,
+  useClusterFeedback,
+} from '../../../lib/recsFeedback';
+import { useArtistLinkItems, useDisplayTitle } from '../../../lib/track-display';
+import { useAutoHide } from '../../../lib/useAutoHide';
+import { type Track, usePlayerStore } from '../../../stores/player';
+import { ArtistNameLinks } from '../ArtistNameLinks';
+import { TrackStatusBadges } from '../TrackStatusBadges';
+import type { ClusterNeighborDto } from './types';
 
 interface Props {
   neighbor: ClusterNeighborDto;

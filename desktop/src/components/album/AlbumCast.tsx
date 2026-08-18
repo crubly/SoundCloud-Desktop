@@ -3,7 +3,7 @@ import { useTranslation } from 'react-i18next';
 import { useNavigate } from 'react-router-dom';
 import { type Aura, auraRgba } from '../../lib/aura';
 import { Users } from '../../lib/icons';
-import {usePerfMode} from '../../lib/perf';
+import { usePerfMode } from '../../lib/perf';
 import { Avatar } from '../ui/Avatar';
 import type { AlbumArtist } from './types';
 
@@ -120,9 +120,9 @@ function AlbumCastImpl({ artists, aura }: AlbumCastProps) {
       className="rounded-[2rem] p-5 md:p-7"
       style={{
         background:
-            b > 0
-                ? 'linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)'
-                : 'rgba(18,18,22,0.85)',
+          b > 0
+            ? 'linear-gradient(180deg, rgba(255,255,255,0.035) 0%, rgba(255,255,255,0.015) 100%)'
+            : 'rgba(18,18,22,0.85)',
         backdropFilter: b > 0 ? `blur(${b}px) saturate(160%)` : undefined,
         WebkitBackdropFilter: b > 0 ? `blur(${b}px) saturate(160%)` : undefined,
         boxShadow:

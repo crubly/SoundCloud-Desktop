@@ -1,14 +1,14 @@
-import {useSortable} from '@dnd-kit/sortable';
-import {CSS} from '@dnd-kit/utilities';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
-import {art, dur} from '../../../lib/formatters';
-import {GripVertical, X} from '../../../lib/icons';
-import {useArtistDisplay, useArtistLinkItems, useDisplayTitle} from '../../../lib/track-display';
-import {type Track, usePlayerStore} from '../../../stores/player';
-import {ArtistNameLinks} from '../ArtistNameLinks';
-import {TrackStatusBadges} from '../TrackStatusBadges';
-import {UploadKindDot} from '../UploadKindDot';
-import {PlayingOverlay} from './PlayingOverlay';
+import { art, dur } from '../../../lib/formatters';
+import { GripVertical, X } from '../../../lib/icons';
+import { useArtistDisplay, useArtistLinkItems, useDisplayTitle } from '../../../lib/track-display';
+import { type Track, usePlayerStore } from '../../../stores/player';
+import { ArtistNameLinks } from '../ArtistNameLinks';
+import { TrackStatusBadges } from '../TrackStatusBadges';
+import { UploadKindDot } from '../UploadKindDot';
+import { PlayingOverlay } from './PlayingOverlay';
 
 const QueueTrackRowBody = React.memo(function QueueTrackRowBody({
   track,

@@ -361,9 +361,12 @@ export async function apiRequest<T = unknown>(
         // На холодном старте `user` ещё null, и бэкендовый 502 (в т.ч. штатный
         // «Renewing your session, try again shortly») уводил в recovery, а через
         // две тихих попытки — в модалку «сессия истекла».
+        // SoundCloud-only build: без сессии auth-gap не запускается — anonymous-
+        // юзер не должен уходить в модалку re-логина на пустом месте.
         const looksLikeAuthGap =
-          verdict.status === 401 ||
-          (verdict.status < 500 && useAuthStore.getState().user == null && !starDeny);
+          authenticated &&
+          (verdict.status === 401 ||
+            (verdict.status < 500 && useAuthStore.getState().user == null && !starDeny));
         if (looksLikeAuthGap) {
           noteAuthGap();
           console.error(`HTTP ERROR: url: ${path}, `, verdict);

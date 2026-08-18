@@ -1,7 +1,7 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-import type {TranscodeStatus} from '../../lib/cache';
-import {usePerfMode} from '../../lib/perf';
+import { useTranslation } from 'react-i18next';
+import type { TranscodeStatus } from '../../lib/cache';
+import { usePerfMode } from '../../lib/perf';
 
 const CHEVRONS = Array.from({ length: 16 }, (_, i) => i);
 

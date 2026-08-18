@@ -10,7 +10,7 @@ use rodio::{Decoder, Player, Source};
 use sha2::{Digest, Sha256};
 
 use crate::audio::analyser::{AnalyserBuffer, AnalyserSource};
-use crate::audio::eq::{EqSource, GainSource};
+use crate::audio::eq::{EqSource, GainSource, StereoSource};
 use crate::audio::types::{
     ChannelCount, EqParams, SampleRate, NORMALIZATION_ANALYSIS_SAMPLES,
     NORMALIZATION_BLOCK_SAMPLES, NORMALIZATION_MAX_ATTENUATION_DB, NORMALIZATION_MAX_BOOST_DB,
@@ -327,7 +327,10 @@ pub fn create_player_from_bytes(
             OpusSource::new(bytes.to_vec()).map_err(|e| format!("Failed to decode: {}", e))?;
         duration = source.total_duration().map(|d| d.as_secs_f64());
         player.append(AnalyserSource::new(
-            EqSource::new(GainSource::new(source, normalization_gain), eq_params),
+            StereoSource::new(
+                EqSource::new(GainSource::new(source, normalization_gain), eq_params.clone()),
+                eq_params,
+            ),
             analyser_buffer,
         ));
     } else if Decoder::new(Cursor::new(bytes.to_vec())).is_ok() {
@@ -335,7 +338,10 @@ pub fn create_player_from_bytes(
             .map_err(|e| format!("Failed to decode: {}", e))?;
         duration = source.total_duration().map(|d| d.as_secs_f64());
         player.append(AnalyserSource::new(
-            EqSource::new(GainSource::new(source, normalization_gain), eq_params),
+            StereoSource::new(
+                EqSource::new(GainSource::new(source, normalization_gain), eq_params.clone()),
+                eq_params,
+            ),
             analyser_buffer,
         ));
     } else {
@@ -343,7 +349,10 @@ pub fn create_player_from_bytes(
             OpusSource::new(bytes.to_vec()).map_err(|e| format!("Failed to decode: {}", e))?;
         duration = source.total_duration().map(|d| d.as_secs_f64());
         player.append(AnalyserSource::new(
-            EqSource::new(GainSource::new(source, normalization_gain), eq_params),
+            StereoSource::new(
+                EqSource::new(GainSource::new(source, normalization_gain), eq_params.clone()),
+                eq_params,
+            ),
             analyser_buffer,
         ));
     }

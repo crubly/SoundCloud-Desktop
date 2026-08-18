@@ -1,7 +1,7 @@
-import {Compass, Pause, Play, Sparkles} from 'lucide-react';
-import {memo} from 'react';
-import {useTranslation} from 'react-i18next';
-import {preloadTrack} from '../../lib/audio';
+import { Compass, Pause, Play, Sparkles } from 'lucide-react';
+import { memo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { preloadTrack } from '../../lib/audio';
 import {
   hardStopHoverPreview,
   PREVIEW_WINDOW_MS,
@@ -9,12 +9,12 @@ import {
   stopHoverPreview,
   useIsPreviewActive,
 } from '../../lib/audioPreview';
-import {art} from '../../lib/formatters';
-import {usePerfMode} from '../../lib/perf';
-import {useArtistDisplay, useDisplayTitle} from '../../lib/track-display';
-import {useTrackPlay} from '../../lib/useTrackPlay';
-import type {Track} from '../../stores/player';
-import {hashStr, type WallItem} from './utils';
+import { art } from '../../lib/formatters';
+import { usePerfMode } from '../../lib/perf';
+import { useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
+import { useTrackPlay } from '../../lib/useTrackPlay';
+import type { Track } from '../../stores/player';
+import { hashStr, type WallItem } from './utils';
 
 interface CoverTileProps {
   item: WallItem;

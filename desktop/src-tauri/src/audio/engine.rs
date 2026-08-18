@@ -497,6 +497,23 @@ pub fn set_eq(enabled: bool, gains: Vec<f64>, state: State<'_, AudioState>) {
     }
 }
 
+/// Mid/side stereo width (0 mono, 1 default, up to 2 widened). Read live by the
+/// `StereoSource` in the playback chain, so no rebuild is needed.
+pub fn set_stereo(width: f64, state: State<'_, AudioState>) {
+    if let Ok(mut params) = state.eq_params.write() {
+        params.stereo_width = width.clamp(0.0, 2.0) as f32;
+    }
+}
+
+/// Toggle the spectrum analyser on/off. Off (default, no visualizer open) keeps
+/// the sample tap out of the audio hot path and the FFT loop asleep.
+pub fn set_visualizer(enabled: bool, state: State<'_, AudioState>) {
+    state
+        .analyser_buffer
+        .enabled
+        .store(enabled, Ordering::Relaxed);
+}
+
 pub fn set_normalization(enabled: bool, state: State<'_, AudioState>) {
     state
         .normalization_enabled

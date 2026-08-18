@@ -1,4 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
+import { useAuthStore } from '../stores/auth';
 import { api } from './api';
 
 export type AuthTokenState = 'ok' | 'stale' | 'expired';
@@ -23,11 +24,13 @@ const POLL_MS = 30_000;
  * фоновой sync-очереди. Поллится фоном — sync_queue с фронта не дёргаем.
  */
 export function useAuthStatus(opts?: { enabled?: boolean }) {
+  const hasSession = useAuthStore((s) => s.hasSession);
+  const enabled = opts?.enabled ?? hasSession;
   return useQuery<AuthStatus>({
     queryKey: ['auth', 'status'],
     queryFn: () => api<AuthStatus>('/auth/status'),
     staleTime: POLL_MS / 2,
     refetchInterval: POLL_MS,
-    enabled: opts?.enabled ?? true,
+    enabled,
   });
 }

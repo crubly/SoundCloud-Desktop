@@ -1,23 +1,23 @@
-import {useMemo} from 'react';
-import {useNavigate} from 'react-router-dom';
-import {art} from '../../lib/formatters';
+import { useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { art } from '../../lib/formatters';
 import {
-    useLyricSearch,
-    useSearchDbArtists,
-    useSearchDbPlaylists,
-    useSearchDbTracks,
-    useSearchDbUsers,
-    useSearchPlaylists,
-    useSearchTracks,
-    useSearchUsers,
-    useVibeSearch,
+  useLyricSearch,
+  useSearchDbArtists,
+  useSearchDbPlaylists,
+  useSearchDbTracks,
+  useSearchDbUsers,
+  useSearchPlaylists,
+  useSearchTracks,
+  useSearchUsers,
+  useVibeSearch,
 } from '../../lib/hooks';
-import {useSmartWave, useWaveBoard} from '../../lib/soundwave';
-import type {Track} from '../../stores/player';
-import type {SearchMode, SearchSource} from '../../stores/searchPrefs';
-import {useSettingsStore} from '../../stores/settings';
-import type {EntityItem} from './EntityStrip';
-import {genreColor, isHeroPos, isHeroUrn, vibeEnergy, type WallItem} from './utils';
+import { useSmartWave, useWaveBoard } from '../../lib/soundwave';
+import type { Track } from '../../stores/player';
+import type { SearchMode, SearchSource } from '../../stores/searchPrefs';
+import { useSettingsStore } from '../../stores/settings';
+import type { EntityItem } from './EntityStrip';
+import { genreColor, isHeroPos, isHeroUrn, vibeEnergy, type WallItem } from './utils';
 
 export interface DiveSeed {
   urn: string;

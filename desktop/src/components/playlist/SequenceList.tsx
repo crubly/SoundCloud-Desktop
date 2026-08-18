@@ -1,21 +1,21 @@
 import {
-    closestCenter,
-    DndContext,
-    type DragEndEvent,
-    DragOverlay,
-    type DragStartEvent,
-    KeyboardSensor,
-    PointerSensor,
-    useSensor,
-    useSensors,
+  closestCenter,
+  DndContext,
+  type DragEndEvent,
+  DragOverlay,
+  type DragStartEvent,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
 } from '@dnd-kit/core';
-import {SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
-import React, {useMemo, useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {Clock, ListMusic, Loader2} from '../../lib/icons';
-import type {Track} from '../../stores/player';
-import {VirtualList} from '../ui/VirtualList';
-import {SequenceRow, SequenceRowOverlay, SortableSequenceRow} from './SequenceRow';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Clock, ListMusic, Loader2 } from '../../lib/icons';
+import type { Track } from '../../stores/player';
+import { VirtualList } from '../ui/VirtualList';
+import { SequenceRow, SequenceRowOverlay, SortableSequenceRow } from './SequenceRow';
 
 const PANEL = {
   background: 'rgba(255,255,255,0.02)',

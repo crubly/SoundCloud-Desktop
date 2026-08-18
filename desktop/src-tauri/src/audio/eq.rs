@@ -189,3 +189,93 @@ impl<S: Source<Item = f32>> Source for EqSource<S> {
         self.source.try_seek(pos)
     }
 }
+
+/// Mid/side stereo-width control (widening / mono collapse).
+/// width == 1.0 is a zero-cost pass-through; 0 is mono; >1 widens the image.
+/// The width is read live from the shared `EqParams`, so adjusting the slider takes
+/// effect immediately — no track reload.
+pub struct StereoSource<S: Source<Item = f32>> {
+    source: S,
+    params: Arc<RwLock<EqParams>>,
+    channels: ChannelCount,
+    sample_rate: SampleRate,
+    channel: u16,
+    /// Left sample of the current frame (L→R pairs are processed together).
+    left_store: f32,
+    /// Processed left of the previous frame, emitted when the next L arrives
+    /// (single-sample iteration can't look ahead, so we run one frame behind).
+    cached_left: f32,
+    primed: bool,
+}
+
+impl<S: Source<Item = f32>> StereoSource<S> {
+    pub fn new(source: S, params: Arc<RwLock<EqParams>>) -> Self {
+        Self {
+            channel: 0,
+            left_store: 0.0,
+            cached_left: 0.0,
+            primed: false,
+            channels: source.channels(),
+            sample_rate: source.sample_rate(),
+            source,
+            params,
+        }
+    }
+}
+
+impl<S: Source<Item = f32>> Iterator for StereoSource<S> {
+    type Item = f32;
+
+    fn next(&mut self) -> Option<f32> {
+        let sample = self.source.next()?;
+        let ch = self.channel;
+        self.channel = (ch + 1) % self.channels.get();
+
+        let width = self
+            .params
+            .read()
+            .ok()
+            .map(|p| p.stereo_width)
+            .unwrap_or(1.0);
+        if self.channels.get() != 2 || (width - 1.0).abs() < 0.001 {
+            return Some(sample);
+        }
+
+        if ch == 0 {
+            let out = if self.primed { self.cached_left } else { sample };
+            self.left_store = sample;
+            self.primed = true;
+            Some(out)
+        } else {
+            let left = self.left_store;
+            let right = sample;
+            let mid = (left + right) * 0.5;
+            let side = (left - right) * 0.5 * width;
+            self.cached_left = (mid + side).clamp(-1.0, 1.0);
+            Some((mid - side).clamp(-1.0, 1.0))
+        }
+    }
+}
+
+impl<S: Source<Item = f32>> Source for StereoSource<S> {
+    fn current_span_len(&self) -> Option<usize> {
+        self.source.current_span_len()
+    }
+
+    fn channels(&self) -> ChannelCount {
+        self.channels
+    }
+
+    fn sample_rate(&self) -> SampleRate {
+        self.sample_rate
+    }
+
+    fn total_duration(&self) -> Option<Duration> {
+        self.source.total_duration()
+    }
+
+    fn try_seek(&mut self, pos: Duration) -> Result<(), SeekError> {
+        self.primed = false;
+        self.source.try_seek(pos)
+    }
+}

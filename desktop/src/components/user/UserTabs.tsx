@@ -15,7 +15,7 @@ import {
   useUserTracks,
 } from '../../lib/hooks';
 import { Loader2, Music } from '../../lib/icons';
-import {usePerfMode} from '../../lib/perf';
+import { usePerfMode } from '../../lib/perf';
 import { PlaylistCard } from '../music/PlaylistCard';
 import { Avatar } from '../ui/Avatar';
 import { VirtualGrid } from '../ui/VirtualGrid';
@@ -245,7 +245,7 @@ export function UserConnectionsTab({
 }) {
   const { t } = useTranslation();
   const nav = useNavigate();
-    const cardB = usePerfMode().blur(20);
+  const cardB = usePerfMode().blur(20);
   const followers = useUserFollowers(mode === 'followers' ? urn : undefined);
   const followings = useUserFollowings(mode === 'followings' ? urn : undefined);
   const q = mode === 'followers' ? followers : followings;
@@ -258,10 +258,10 @@ export function UserConnectionsTab({
         onClick={() => nav(`/user/${encodeURIComponent(user.urn)}`)}
         className="group relative h-full w-full flex flex-col items-center gap-3 p-6 rounded-3xl transition-transform duration-500 cursor-pointer overflow-hidden hover:scale-[1.02]"
         style={{
-            background: cardB > 0 ? 'rgba(255,255,255,0.03)' : 'rgba(24,24,28,0.85)',
+          background: cardB > 0 ? 'rgba(255,255,255,0.03)' : 'rgba(24,24,28,0.85)',
           border: '0.5px solid rgba(255,255,255,0.06)',
-            backdropFilter: cardB > 0 ? `blur(${cardB}px)` : undefined,
-            WebkitBackdropFilter: cardB > 0 ? `blur(${cardB}px)` : undefined,
+          backdropFilter: cardB > 0 ? `blur(${cardB}px)` : undefined,
+          WebkitBackdropFilter: cardB > 0 ? `blur(${cardB}px)` : undefined,
         }}
       >
         <div className="w-20 h-20 rounded-full overflow-hidden ring-2 ring-white/10 group-hover:ring-white/30 transition-all duration-500">
@@ -279,7 +279,7 @@ export function UserConnectionsTab({
         </div>
       </button>
     ),
-      [nav, t, cardB],
+    [nav, t, cardB],
   );
 
   const emptyText = mode === 'followers' ? t('user.noFollowers') : t('user.noFollowings');

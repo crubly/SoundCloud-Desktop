@@ -19,7 +19,7 @@ export let STORAGE_BASE = '';
 export let STORAGE_PREMIUM_BASE = '';
 /** Upstream для прокси картинок: 'direct' = локальный прокси качает сам
  *  (SoundCloud-CDN), минуя их CDN. */
-export let IMAGES_BASE = 'direct';
+export const IMAGES_BASE = 'direct';
 export let PAY_BASE = '';
 
 export const GITHUB_OWNER = 'zxcloli666';

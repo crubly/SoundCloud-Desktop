@@ -103,6 +103,16 @@ pub fn audio_set_eq(enabled: bool, gains: Vec<f64>, state: State<'_, AudioState>
 }
 
 #[tauri::command]
+pub fn audio_set_stereo(width: f64, state: State<'_, AudioState>) {
+    engine::set_stereo(width, state);
+}
+
+#[tauri::command]
+pub fn audio_set_visualizer(enabled: bool, state: State<'_, AudioState>) {
+    engine::set_visualizer(enabled, state);
+}
+
+#[tauri::command]
 pub fn audio_set_normalization(enabled: bool, state: State<'_, AudioState>) {
     engine::set_normalization(enabled, state);
 }

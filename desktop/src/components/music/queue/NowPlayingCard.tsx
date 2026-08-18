@@ -1,12 +1,12 @@
 import React from 'react';
-import {useShallow} from 'zustand/shallow';
-import {art, dur} from '../../../lib/formatters';
-import {useArtistDisplay, useArtistLinkItems, useDisplayTitle} from '../../../lib/track-display';
-import {type Track, usePlayerStore} from '../../../stores/player';
-import {ArtistNameLinks} from '../ArtistNameLinks';
-import {TrackStatusBadges} from '../TrackStatusBadges';
-import {UploadKindDot} from '../UploadKindDot';
-import {PlayingOverlay} from './PlayingOverlay';
+import { useShallow } from 'zustand/shallow';
+import { art, dur } from '../../../lib/formatters';
+import { useArtistDisplay, useArtistLinkItems, useDisplayTitle } from '../../../lib/track-display';
+import { type Track, usePlayerStore } from '../../../stores/player';
+import { ArtistNameLinks } from '../ArtistNameLinks';
+import { TrackStatusBadges } from '../TrackStatusBadges';
+import { UploadKindDot } from '../UploadKindDot';
+import { PlayingOverlay } from './PlayingOverlay';
 
 const NowPlayingBody = React.memo(({ track }: { track: Track }) => {
   const artistDisplay = useArtistDisplay(track);

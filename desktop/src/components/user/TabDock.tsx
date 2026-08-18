@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { type Aura, auraRgba } from '../../lib/aura';
-import {fc} from '../../lib/formatters';
-import {usePerfMode} from '../../lib/perf';
+import { fc } from '../../lib/formatters';
+import { usePerfMode } from '../../lib/perf';
+import { useWheelHorizontalScroll } from '../../lib/useWheelHorizontalScroll';
 
 export type TabId = 'popular' | 'tracks' | 'playlists' | 'likes' | 'followers' | 'following';
 
@@ -21,9 +22,17 @@ interface TabDockProps<T extends string = string> {
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
 function TabDockImpl<T extends string>({ tabs, active, onChange, aura }: TabDockProps<T>) {
-    const perf = usePerfMode();
-    const dockB = perf.blur(40);
+  const perf = usePerfMode();
+  const dockB = perf.blur(40);
   const dockRef = useRef<HTMLDivElement>(null);
+  const wheelRef = useWheelHorizontalScroll();
+  const setDockRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      dockRef.current = node;
+      wheelRef(node);
+    },
+    [wheelRef],
+  );
   const [pill, setPill] = useState<{ x: number; w: number } | null>(null);
   const [overflows, setOverflows] = useState(false);
   const dragRef = useRef({ active: false, startX: 0, startScroll: 0, moved: false });
@@ -94,13 +103,6 @@ function TabDockImpl<T extends string>({ tabs, active, onChange, aura }: TabDock
     }
   }, []);
 
-  const onWheel = useCallback((e: React.WheelEvent<HTMLDivElement>) => {
-    const dock = dockRef.current;
-    if (!dock) return;
-    if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) return;
-    dock.scrollLeft += e.deltaY;
-  }, []);
-
   const [isHovered, setIsHovered] = useState(false);
 
   useEffect(() => {
@@ -127,22 +129,21 @@ function TabDockImpl<T extends string>({ tabs, active, onChange, aura }: TabDock
   return (
     <div className="sticky top-3 z-40 flex justify-center pointer-events-none px-2 sm:px-4">
       <div
-        ref={dockRef}
+        ref={setDockRef}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={endDrag}
         onPointerCancel={endDrag}
         onClickCapture={onClickCapture}
-        onWheel={onWheel}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
         className={`pointer-events-auto relative flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-2xl min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x select-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] ${
           overflows ? 'cursor-grab' : 'cursor-default'
         }`}
         style={{
-            background: dockB > 0 ? 'rgba(15,15,18,0.55)' : 'rgba(15,15,18,0.92)',
-            backdropFilter: dockB > 0 ? `blur(${dockB}px) saturate(180%)` : undefined,
-            WebkitBackdropFilter: dockB > 0 ? `blur(${dockB}px) saturate(180%)` : undefined,
+          background: dockB > 0 ? 'rgba(15,15,18,0.55)' : 'rgba(15,15,18,0.92)',
+          backdropFilter: dockB > 0 ? `blur(${dockB}px) saturate(180%)` : undefined,
+          WebkitBackdropFilter: dockB > 0 ? `blur(${dockB}px) saturate(180%)` : undefined,
           boxShadow:
             '0 24px 60px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.08)',
         }}

@@ -22,6 +22,9 @@ pub type SampleRate = NonZero<u32>;
 pub struct EqParams {
     pub enabled: bool,
     pub gains: [f64; EQ_BANDS],
+    /// Mid/side stereo-width factor (1.0 = pass-through, 0 = mono, >1 = widened).
+    /// Read live by `StereoSource` so changes apply without a track reload.
+    pub stereo_width: f32,
 }
 
 impl Default for EqParams {
@@ -29,6 +32,7 @@ impl Default for EqParams {
         Self {
             enabled: false,
             gains: [0.0; EQ_BANDS],
+            stereo_width: 1.0,
         }
     }
 }

@@ -1,10 +1,10 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-import {formatBytes} from '../../lib/formatters';
-import {ArrowDownToLine, Check, Lock, X} from '../../lib/icons';
-import type {CacheLikesProgress} from '../../lib/likes-cache';
-import {usePerfMode} from '../../lib/perf';
-import {useSettingsStore} from '../../stores/settings';
+import { useTranslation } from 'react-i18next';
+import { formatBytes } from '../../lib/formatters';
+import { ArrowDownToLine, Check, Lock, X } from '../../lib/icons';
+import type { CacheLikesProgress } from '../../lib/likes-cache';
+import { usePerfMode } from '../../lib/perf';
+import { useSettingsStore } from '../../stores/settings';
 
 const TICKS =
   'repeating-linear-gradient(90deg, transparent 0, transparent calc(12.5% - 1px), rgba(10,10,12,0.9) calc(12.5% - 1px), rgba(10,10,12,0.9) 12.5%)';

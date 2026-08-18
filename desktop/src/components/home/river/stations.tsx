@@ -1,11 +1,11 @@
-import React, {useMemo} from 'react';
-import {useTranslation} from 'react-i18next';
-import {ClusterFeedbackProvider} from '../../../lib/recsFeedback';
-import type {Track} from '../../../stores/player';
-import {TrackCard} from '../../music/TrackCard';
-import {genreColor} from '../../search/utils';
-import {HorizontalScroll} from '../../ui/HorizontalScroll';
-import {ScheduleRow} from './WaveSchedule';
+import React, { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { ClusterFeedbackProvider } from '../../../lib/recsFeedback';
+import type { Track } from '../../../stores/player';
+import { TrackCard } from '../../music/TrackCard';
+import { genreColor } from '../../search/utils';
+import { HorizontalScroll } from '../../ui/HorizontalScroll';
+import { ScheduleRow } from './WaveSchedule';
 
 const BROOK_CAP = 6;
 const SHELF_CAP = 18;

@@ -1,10 +1,22 @@
-import {closestCenter, DndContext, DragOverlay, PointerSensor, useSensor, useSensors,} from '@dnd-kit/core';
-import {arrayMove, SortableContext, verticalListSortingStrategy} from '@dnd-kit/sortable';
-import React, {useMemo, useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {VirtualList} from '../ui/VirtualList';
-import {OfflineRowClone, OfflineTrackRow, ROW_HEIGHT, SortableOfflineRow,} from './OfflineTrackRow';
-import type {OfflineEntry} from './types';
+import {
+  closestCenter,
+  DndContext,
+  DragOverlay,
+  PointerSensor,
+  useSensor,
+  useSensors,
+} from '@dnd-kit/core';
+import { arrayMove, SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import React, { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { VirtualList } from '../ui/VirtualList';
+import {
+  OfflineRowClone,
+  OfflineTrackRow,
+  ROW_HEIGHT,
+  SortableOfflineRow,
+} from './OfflineTrackRow';
+import type { OfflineEntry } from './types';
 
 interface OfflineTrackListProps {
   entries: OfflineEntry[];

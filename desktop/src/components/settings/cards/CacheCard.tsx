@@ -1,20 +1,20 @@
-import {useCallback, useEffect, useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {toast} from 'sonner';
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
 import {
-    clearCache,
-    clearImageCache,
-    clearLikedCache,
-    getCacheSize,
-    getImageCacheSize,
-    getLikedCacheSize,
+  clearCache,
+  clearImageCache,
+  clearLikedCache,
+  getCacheSize,
+  getImageCacheSize,
+  getLikedCacheSize,
 } from '../../../lib/cache';
-import {formatBytes} from '../../../lib/formatters';
-import {Database, Download, Loader2, Trash2, X} from '../../../lib/icons';
-import {useCacheLikes} from '../../../lib/likes-cache';
-import {useSettingsStore} from '../../../stores/settings';
-import {Skeleton} from '../../ui/Skeleton';
-import {Card, Divider, RangeSlider} from '../primitives';
+import { formatBytes } from '../../../lib/formatters';
+import { Database, Download, Loader2, Trash2, X } from '../../../lib/icons';
+import { useCacheLikes } from '../../../lib/likes-cache';
+import { useSettingsStore } from '../../../stores/settings';
+import { Skeleton } from '../../ui/Skeleton';
+import { Card, Divider, RangeSlider } from '../primitives';
 
 function CacheRow({
   label,

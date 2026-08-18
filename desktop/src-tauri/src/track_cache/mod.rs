@@ -5,4 +5,6 @@ mod state;
 mod transcode;
 
 pub use commands::*;
-pub use state::init;
+pub use state::{TrackCacheState, init};
+
+pub(crate) use state::urn_to_filename;

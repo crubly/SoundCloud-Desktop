@@ -1,15 +1,21 @@
-import {useQueryClient} from '@tanstack/react-query';
-import React, {useEffect, useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {toast} from 'sonner';
-import {api} from '../../lib/api';
-import {downloadTrack} from '../../lib/cache';
-import {fc} from '../../lib/formatters';
-import {invalidateAllLikesCache} from '../../lib/hooks';
-import {Check, Download, Heart, LinkIcon, Loader2, pauseCurrent16, playCurrent16,} from '../../lib/icons';
-import {optimisticToggleLike, setLikedUrn, useLiked} from '../../lib/likes';
-import {getTrackDisplay} from '../../lib/track-display';
-import type {Track} from '../../stores/player';
+import { useQueryClient } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { downloadTrack } from '../../lib/cache';
+import { fc } from '../../lib/formatters';
+import {
+  Check,
+  Download,
+  Heart,
+  LinkIcon,
+  Loader2,
+  pauseCurrent16,
+  playCurrent16,
+} from '../../lib/icons';
+import { optimisticToggleLike, setLikedUrn, useLiked } from '../../lib/likes';
+import { getTrackDisplay } from '../../lib/track-display';
+import type { Track } from '../../stores/player';
 
 /** Accent like-chip: icon + count, glows accent when active. */
 const EngagementChip = React.memo(function EngagementChip({
@@ -51,23 +57,12 @@ export const LikeBtn = React.memo(({ trackUrn, count }: { trackUrn: string; coun
 
   useEffect(() => setLocalCount(count ?? 0), [count]);
 
-  const toggle = async () => {
+  const toggle = () => {
     const next = !liked;
     setLocalCount((c) => c + (next ? 1 : -1));
     const cached = qc.getQueryData<Track>(['track', trackUrn]);
     if (cached) optimisticToggleLike(qc, cached, next);
     else setLikedUrn(trackUrn, next);
-    invalidateAllLikesCache();
-    try {
-      await api(`/likes/tracks/${encodeURIComponent(trackUrn)}`, {
-        method: next ? 'POST' : 'DELETE',
-      });
-      qc.invalidateQueries({ queryKey: ['track', trackUrn, 'favoriters'] });
-    } catch {
-      setLocalCount((c) => c + (next ? -1 : 1));
-      if (cached) optimisticToggleLike(qc, cached, !next);
-      else setLikedUrn(trackUrn, !next);
-    }
   };
 
   return (

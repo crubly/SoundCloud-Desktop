@@ -1,18 +1,26 @@
-import {useSortable} from '@dnd-kit/sortable';
-import {CSS} from '@dnd-kit/utilities';
-import React, {useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {toast} from 'sonner';
-import {downloadTrack} from '../../lib/cache';
-import {art, dur, formatBytes} from '../../lib/formatters';
-import {ArrowDownToLine, FileDown, GripVertical, Loader2, Music, playWhite14, Trash2,} from '../../lib/icons';
-import {usePerfMode} from '../../lib/perf';
-import {useArtistLinkItems, useTrackDisplay} from '../../lib/track-display';
-import {usePlayerStore} from '../../stores/player';
-import {ArtistNameLinks} from '../music/ArtistNameLinks';
-import {TrackStatusBadges} from '../music/TrackStatusBadges';
-import {effectiveDurationMs, isTruncated} from './lib';
-import type {OfflineEntry} from './types';
+import { useSortable } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import React, { useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { toast } from 'sonner';
+import { downloadTrack } from '../../lib/cache';
+import { art, dur, formatBytes } from '../../lib/formatters';
+import {
+  ArrowDownToLine,
+  FileDown,
+  GripVertical,
+  Loader2,
+  Music,
+  playWhite14,
+  Trash2,
+} from '../../lib/icons';
+import { usePerfMode } from '../../lib/perf';
+import { useArtistLinkItems, useTrackDisplay } from '../../lib/track-display';
+import { usePlayerStore } from '../../stores/player';
+import { ArtistNameLinks } from '../music/ArtistNameLinks';
+import { TrackStatusBadges } from '../music/TrackStatusBadges';
+import { effectiveDurationMs, isTruncated } from './lib';
+import type { OfflineEntry } from './types';
 
 export const ROW_HEIGHT = 56;
 

@@ -1,92 +1,115 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { useEffect, useSyncExternalStore } from 'react';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
 import type { Track } from '../stores/player';
+import { usePlayerStore } from '../stores/player';
 import { api } from './api';
 import { recordEvent } from './events';
+import { tauriStorage } from './tauri-storage';
 
-const _dislikedUrns = new Map<string, boolean>();
-const _listeners = new Set<() => void>();
+/* ── Local dislikes — single source of truth ────────────────
+ *  Дизлайки живут только на устройстве (персист sc-dislikes). Аккаунт/бэк
+ *  отдаёт заглушку, так что никакой сетевой синхронизации нет — пишем локально.
+ *  Дизлайкнутое исключается из рекомендаций (вкус) и убирается из очереди. */
 
-function notify() {
-  for (const l of _listeners) l();
+interface DislikesState {
+  urns: Record<string, boolean>;
+  set: (urn: string, disliked: boolean) => void;
+  clear: () => void;
 }
 
-export function setDislikedUrn(urn: string, disliked: boolean) {
-  if (disliked) {
-    _dislikedUrns.set(urn, true);
-  } else {
-    _dislikedUrns.delete(urn);
-  }
-  notify();
+export const useDislikesStore = create<DislikesState>()(
+  persist(
+    (set) => ({
+      urns: {},
+      set: (urn, disliked) =>
+        set((s) => {
+          const urns = { ...s.urns };
+          if (disliked) urns[urn] = true;
+          else delete urns[urn];
+          return { urns };
+        }),
+      clear: () => set({ urns: {} }),
+    }),
+    {
+      name: 'sc-dislikes',
+      storage: createJSONStorage(() => tauriStorage),
+      partialize: (s) => ({ urns: s.urns }),
+    },
+  ),
+);
+
+export function setDislikedUrn(urn: string, disliked: boolean): void {
+  useDislikesStore.getState().set(urn, disliked);
 }
 
 export function isUrnDisliked(urn: string): boolean {
-  return _dislikedUrns.has(urn);
+  return useDislikesStore.getState().urns[urn] === true;
 }
 
+/** React hook — дизлайкнут ли URN. */
 export function useDisliked(urn: string): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      _listeners.add(cb);
-      return () => _listeners.delete(cb);
-    },
-    () => _dislikedUrns.has(urn),
-  );
+  return useDislikesStore((s) => s.urns[urn] === true);
 }
 
-const _inflightStatus = new Map<string, Promise<boolean>>();
-
-/** Fetch dislike status once per URN session-wide. Result is cached in the global store. */
-export async function fetchDislikeStatus(urn: string): Promise<boolean> {
-  if (_dislikedUrns.has(urn)) return true;
-  const existing = _inflightStatus.get(urn);
-  if (existing) return existing;
-  const p = api<{ disliked: boolean }>(`/dislikes/status/${encodeURIComponent(urn)}`)
-    .then((r) => {
-      if (r.disliked) setDislikedUrn(urn, true);
-      return r.disliked;
-    })
-    .catch(() => false)
-    .finally(() => {
-      _inflightStatus.delete(urn);
-    });
-  _inflightStatus.set(urn, p);
-  return p;
-}
-
-/** Hook: subscribe to dislike state and trigger fetch on mount. */
+/** Hook: состояние дизлайка без побочных фетчей (бэк заглушен). */
 export function useDislikeStatus(urn: string | undefined): boolean {
-  const disliked = useSyncExternalStore(
-    (cb) => {
-      _listeners.add(cb);
-      return () => _listeners.delete(cb);
-    },
-    () => (urn ? _dislikedUrns.has(urn) : false),
-  );
-  useEffect(() => {
-    if (urn) fetchDislikeStatus(urn);
-  }, [urn]);
-  return disliked;
+  return useDislikesStore((s) => (urn ? s.urns[urn] === true : false));
 }
 
-/**
- * Загружает все ID дизлайкнутых треков юзера в локальный кеш.
- * Вызывается один раз после авторизации, чтобы автоскип в audio.ts
- * мог работать синхронно без запросов к бэку.
- */
-let _bulkLoaded = false;
+/** Все дизлайкнутые URN (для фильтра вкуса/лент) — реактивно. */
+export function useDislikedUrns(): Record<string, boolean> {
+  return useDislikesStore((s) => s.urns);
+}
+
+/** Синхронный набор дизлайкнутых URN (вне React). */
+export function getDislikedUrns(): Set<string> {
+  return new Set(Object.keys(useDislikesStore.getState().urns));
+}
+
+// Совместимые no-op — сетевой синхронизации с этим бэком не существует.
+export async function fetchDislikeStatus(urn: string): Promise<boolean> {
+  return isUrnDisliked(urn);
+}
+
 export async function loadAllDislikedIds(): Promise<void> {
-  if (_bulkLoaded) return;
-  try {
-    const r = await api<{ ids: string[] }>('/dislikes/ids');
-    for (const id of r.ids) {
-      const urn = id.startsWith('soundcloud:tracks:') ? id : `soundcloud:tracks:${id}`;
-      _dislikedUrns.set(urn, true);
-    }
-    _bulkLoaded = true;
-    notify();
-  } catch {
-    /* ignore — fallback на per-track fetchDislikeStatus */
+  /* дизлайки локальные (sc-dislikes) — подгрузки с бэка нет */
+}
+
+/** Выбрасывает дизлайкнутый трек из очереди; если он играл — продолжает следующим. */
+export function purgeDislikedFromQueue(urn: string): void {
+  const state = usePlayerStore.getState();
+  const idx = state.queue.findIndex((t) => t.urn === urn);
+  if (idx < 0) return;
+  const isCurrent = idx === state.queueIndex;
+  const queue = state.queue.filter((t) => t.urn !== urn);
+  const originalQueue = state.originalQueue
+    ? state.originalQueue.filter((t) => t.urn !== urn)
+    : null;
+
+  if (queue.length === 0) {
+    usePlayerStore.setState({
+      queue: [],
+      originalQueue,
+      queueIndex: -1,
+      currentTrack: null,
+      isPlaying: false,
+    });
+    return;
+  }
+
+  if (isCurrent) {
+    const nextIdx = Math.min(idx, queue.length - 1);
+    usePlayerStore.setState({
+      queue,
+      originalQueue,
+      queueIndex: nextIdx,
+      currentTrack: queue[nextIdx],
+      isPlaying: state.isPlaying,
+    });
+  } else {
+    const qi = idx < state.queueIndex ? state.queueIndex - 1 : state.queueIndex;
+    usePlayerStore.setState({ queue, originalQueue, queueIndex: qi });
   }
 }
 

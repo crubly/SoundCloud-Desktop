@@ -535,6 +535,8 @@
     "discordRpcModeActivity": "Yalnizca etkinlik",
     "discordRpcButton": "SoundCloud dugmesi",
     "discordRpcButtonDesc": "Parcayi SoundCloud'da acan dugmeyi goster",
+    "discordRpcHidePaused": "Duraklatinca gizle",
+    "discordRpcHidePausedDesc": "Oynatma duraklatildiginda Discord durumunu kaldir",
     "normalizeVolume": "Ses duzeyi dengeleme",
     "normalizeVolumeDesc": "Sessiz ve yuksek parcarlari daha esit bir seviyeye getirir",
     "highQualityStreaming": "Yuksek kalite akis",
@@ -852,7 +854,7 @@
     "discord": {
       "title": "Discord sunucumuz var!",
       "description": "Toplulugumuza katilin — tartisma, oneriler, hata bildirimi",
-      "body": "SoundCloud Desktop icin resmi Discord sunucumuzu actik!\n\nDiger kullanicilarla sohbet etmek, yeni ozellikler onermek, hata bildirmek ve en son haberleri takip etmek icin katilin.\n\nhttps://discord.gg/xQcGBP8fGG"
+      "body": "SoundCloud icin resmi Discord sunucumuzu actik!\n\nDiger kullanicilarla sohbet etmek, yeni ozellikler onermek, hata bildirmek ve en son haberleri takip etmek icin katilin.\n\nhttps://discord.gg/xQcGBP8fGG"
     }
   },
   "call": {

@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom';
 import { requestProbe, useHostStatusStore } from '../../lib/host-status';
 import { Download, ExternalLink, RefreshCw, Star, WifiOff, X } from '../../lib/icons';
 import { useAppStatusStore } from '../../stores/app-status';
-import { useAuthStore } from '../../stores/auth';
 import { useAuthRecoveryStore } from '../../stores/auth-recovery';
 import { Modal, ModalClose, ModalContent, ModalTitle } from '../ui/Modal';
 import { useFailoverUi } from './useFailoverUi';
@@ -53,7 +52,6 @@ export const HostStatusModal = React.memo(() => {
   const dismissModal = useHostStatusStore((s) => s.dismissModal);
   const probing = useHostStatusStore((s) => s.probing);
   const recoveryPhase = useAuthRecoveryStore((s) => s.phase);
-  const hasSession = useAuthStore((s) => s.hasSession);
   const navigate = useNavigate();
 
   const open =
@@ -68,14 +66,6 @@ export const HostStatusModal = React.memo(() => {
     useAppStatusStore.getState().setOfflineBypass(true);
     dismissModal();
     navigate('/offline', { replace: true });
-  };
-
-  // Main is down but star is up: the user can buy STAR right now — pay grants it
-  // via the star backend, so they keep using the app on star without waiting for
-  // main to recover.
-  const goBuyStar = () => {
-    dismissModal();
-    navigate('/star');
   };
 
   return (
@@ -115,16 +105,6 @@ export const HostStatusModal = React.memo(() => {
           </div>
 
           <div className="space-y-2.5">
-            {!allDown && hasSession && (
-              <button
-                type="button"
-                onClick={goBuyStar}
-                className="w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-accent text-accent-contrast font-semibold text-[13px] hover:bg-accent-hover active:scale-[0.97] transition-all duration-200 cursor-pointer shadow-[0_0_30px_var(--color-accent-glow),0_2px_8px_rgba(0,0,0,0.3)]"
-              >
-                <Star size={14} fill="currentColor" />
-                {t('hostStatus.actions.buyStar')}
-              </button>
-            )}
             <button
               type="button"
               onClick={goOfflineLibrary}

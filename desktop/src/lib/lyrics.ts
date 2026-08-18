@@ -1,6 +1,16 @@
-import {api} from './api';
+import { api } from './api';
+import { getCachedLyrics, saveLyricsToCache } from './lyrics-cache';
+import type { Track } from '../stores/player';
+import { isYouTubeUrn } from './youtube';
 
-export type LyricsSource = 'lrclib' | 'musixmatch' | 'genius' | 'netease' | 'self_gen' | 'none';
+export type LyricsSource =
+  | 'lrclib'
+  | 'musixmatch'
+  | 'genius'
+  | 'netease'
+  | 'self_gen'
+  | 'none'
+  | 'cache';
 
 export interface LyricLine {
   time: number;
@@ -49,19 +59,57 @@ function toResult(data: BackendLyricsResponse | null): LyricsResult | null {
 
 /** Load lyrics by track URN/id. Backend resolves artist/title itself and writes to cache. */
 export async function getLyricsByTrack(scTrackId: string): Promise<LyricsResult | null> {
+  const cached = getCachedLyrics(scTrackId);
+  if (cached) return cached;
   const data = await api<BackendLyricsResponse>(
     `/lyrics/${encodeURIComponent(scTrackId)}`,
     undefined,
     180_000,
   ).catch(() => null);
-  return toResult(data);
+  const result = toResult(data);
+  if (result) saveLyricsToCache(scTrackId, result);
+  return result;
 }
 
-/** Manual search — preview only. Backend does NOT read or write cache. */
+/* ── YouTube ────────────────────────────────────────────────── */
+
+/** «Artist — Title (Official Video)» → чистые artist/title для LRCLIB. */
+function youtubeArtistTitle(track: Track): { artist: string; title: string } {
+  const clean = (s: string) =>
+    s
+      .replace(
+        /\s*[([][^\])]*(official|video|audio|lyrics?|hd|hq|4k|m\/?v|visuali[sz]er|premiere)[^\])]*[\])]/gi,
+        ' ',
+      )
+      .replace(/\s{2,}/g, ' ')
+      .trim();
+  const channel = track.user.username.replace(/\s*-\s*Topic$/i, '').replace(/VEVO$/i, '').trim();
+  const parts = track.title.split(' - ');
+  if (parts.length >= 2 && parts[0].trim().length > 0 && parts[0].length <= 60) {
+    return { artist: clean(parts[0]) || channel, title: clean(parts.slice(1).join(' - ')) };
+  }
+  return { artist: channel, title: clean(track.title) };
+}
+
+/** Единая точка входа для панели лирики. Для youtube: URN серверный резолвер
+ *  по URN бессилен — идём в ручной поиск по artist/title, кэш тот же. */
+export async function getLyricsForTrack(track: Track): Promise<LyricsResult | null> {
+  if (!isYouTubeUrn(track.urn)) return getLyricsByTrack(track.urn);
+  const cached = getCachedLyrics(track.urn);
+  if (cached) return cached;
+  const { artist, title } = youtubeArtistTitle(track);
+  if (!title) return null;
+  return searchLyricsManual(artist, title, track.duration, track.urn);
+}
+
+/** Manual search — preview only. Backend does NOT read or write cache.
+ *  When the result is displayed for a track (`scTrackId`), it is written to the
+ *  local custom-lyrics cache so the track keeps it on the next visit. */
 export async function searchLyricsManual(
   artist: string,
   title: string,
   durationMs?: number,
+  scTrackId?: string,
 ): Promise<LyricsResult | null> {
   const params = new URLSearchParams({ artist, title });
   if (durationMs && Number.isFinite(durationMs) && durationMs > 0) {
@@ -72,5 +120,7 @@ export async function searchLyricsManual(
     undefined,
     180_000,
   ).catch(() => null);
-  return toResult(data);
+  const result = toResult(data);
+  if (result && scTrackId) saveLyricsToCache(scTrackId, result);
+  return result;
 }

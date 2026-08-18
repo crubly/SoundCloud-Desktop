@@ -1,32 +1,32 @@
-import type {DragEndEvent} from '@dnd-kit/core';
+import type { DragEndEvent } from '@dnd-kit/core';
 import * as Dialog from '@radix-ui/react-dialog';
-import React, {useCallback, useEffect, useMemo, useRef, useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {useNavigate, useParams} from 'react-router-dom';
-import {toast} from 'sonner';
-import {useShallow} from 'zustand/shallow';
-import {CrateLedger} from '../components/playlist/CrateLedger';
-import {PLAYLIST_KEYFRAMES} from '../components/playlist/keyframes';
-import {MoreCrates} from '../components/playlist/MoreCrates';
-import {PlaylistHero} from '../components/playlist/PlaylistHero';
-import {SequenceList} from '../components/playlist/SequenceList';
-import {SetRibbon} from '../components/playlist/SetRibbon';
-import {usePlaylistAura} from '../components/playlist/usePlaylistAura';
-import {Atmosphere} from '../components/search/Atmosphere';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useNavigate, useParams } from 'react-router-dom';
+import { toast } from 'sonner';
+import { useShallow } from 'zustand/shallow';
+import { CrateLedger } from '../components/playlist/CrateLedger';
+import { PLAYLIST_KEYFRAMES } from '../components/playlist/keyframes';
+import { MoreCrates } from '../components/playlist/MoreCrates';
+import { PlaylistHero } from '../components/playlist/PlaylistHero';
+import { SequenceList } from '../components/playlist/SequenceList';
+import { SetRibbon } from '../components/playlist/SetRibbon';
+import { usePlaylistAura } from '../components/playlist/usePlaylistAura';
+import { Atmosphere } from '../components/search/Atmosphere';
 import {
-    useDeletePlaylist,
-    useInfiniteScroll,
-    usePlaylist,
-    usePlaylistTracks,
-    useUpdatePlaylistTracks,
+  useDeletePlaylist,
+  useInfiniteScroll,
+  usePlaylist,
+  usePlaylistTracks,
+  useUpdatePlaylistTracks,
 } from '../lib/hooks';
-import {AlertCircle, ChevronLeft, X} from '../lib/icons';
-import {usePerfMode} from '../lib/perf';
-import {rawPlaylistCover} from '../lib/playlist-cover';
-import {armPlaylistContinuation} from '../lib/queue-continuation';
-import {useAuthStore} from '../stores/auth';
-import {type Track, usePlayerStore} from '../stores/player';
-import {useSettingsStore} from '../stores/settings';
+import { AlertCircle, ChevronLeft, X } from '../lib/icons';
+import { usePerfMode } from '../lib/perf';
+import { rawPlaylistCover } from '../lib/playlist-cover';
+import { armPlaylistContinuation } from '../lib/queue-continuation';
+import { useAuthStore } from '../stores/auth';
+import { type Track, usePlayerStore } from '../stores/player';
+import { useSettingsStore } from '../stores/settings';
 
 function HeroSkeleton() {
   return (

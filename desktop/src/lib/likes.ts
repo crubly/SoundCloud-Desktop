@@ -1,64 +1,35 @@
 import type { QueryClient } from '@tanstack/react-query';
-import { useSyncExternalStore } from 'react';
-import { useAuthStore } from '../stores/auth';
+import { useFavoritesStore } from '../stores/favorites';
 import type { Track } from '../stores/player';
-import { recordEvent } from './events';
 
-interface PagedTracks {
-  collection: Track[];
-  page: number;
-  page_size: number;
-  has_more: boolean;
-}
+/* ── Local favorites — single source of truth ──────────────
+ *  Likes live ONLY on-device (persisted via tauri-storage in the favorites
+ *  store). There is no account/backend sync — the heart always works offline. */
 
-/* ── Global liked URNs store ─────────────────────────────── */
-
-const _likedUrns = new Map<string, boolean>();
-const _listeners = new Set<() => void>();
-
-function notify() {
-  for (const l of _listeners) l();
-}
-
-/** Sync liked URNs from loaded liked tracks (called on every useLikedTracks data change) */
-export function initLikedUrns(tracks: Track[]) {
-  let changed = false;
-  for (const t of tracks) {
-    if (!_likedUrns.has(t.urn)) {
-      _likedUrns.set(t.urn, true);
-      changed = true;
-    }
-  }
-  if (changed) notify();
-}
-
-/** Set like status for a track URN */
-export function setLikedUrn(urn: string, liked: boolean) {
-  if (liked) {
-    _likedUrns.set(urn, true);
-  } else {
-    _likedUrns.delete(urn);
-  }
-  notify();
-}
-
-/** Check if a track URN is liked */
-export function isUrnLiked(urn: string): boolean {
-  return _likedUrns.has(urn);
-}
-
-/** React hook — subscribes to like status for a specific URN */
+/** React hook — is a track URN liked? */
 export function useLiked(urn: string): boolean {
-  return useSyncExternalStore(
-    (cb) => {
-      _listeners.add(cb);
-      return () => _listeners.delete(cb);
-    },
-    () => _likedUrns.has(urn),
-  );
+  return useFavoritesStore((s) => s.tracks[urn] !== undefined);
 }
 
-/* ── Liked-tracks counter ───────────────────────────────── */
+/** Check if a track URN is liked (outside React) */
+export function isUrnLiked(urn: string): boolean {
+  return useFavoritesStore.getState().tracks[urn] !== undefined;
+}
+
+/** Set like status for a track URN (no track payload — only removes, or marks urn-only) */
+export function setLikedUrn(urn: string, liked: boolean) {
+  useFavoritesStore.getState().set(urn, null, liked);
+}
+
+/** Set like status with a full track payload (used to seed / save into Library) */
+export function setLikedTrack(track: Track, liked: boolean) {
+  useFavoritesStore.getState().set(track.urn, track, liked);
+}
+
+/** Backwards-compat seed from server data — now a no-op (no server likes) */
+export function initLikedUrns(_tracks: Track[]) {}
+
+/* ── Liked-tracks counter (server/account-derived, legacy) ─ */
 
 interface UserLikeCounters {
   likes_count?: number | null;
@@ -69,61 +40,15 @@ export function likedTracksCount(user: UserLikeCounters | null | undefined): num
   return user?.likes_count ?? user?.public_favorites_count ?? undefined;
 }
 
-/* ── Optimistic toggle (TanStack Query cache) ───────────── */
+/* ── Optimistic toggle (local + TanStack Query cache) ───── */
 
 export function optimisticToggleLike(qc: QueryClient, track: Track, nowLiked: boolean) {
-  // Update global liked URNs
-  setLikedUrn(track.urn, nowLiked);
+  // Persist locally — this is the real "write"
+  setLikedTrack(track, nowLiked);
 
-  // Record like event for SoundWave taste model (only on positive transition)
-  if (nowLiked) recordEvent('like', track.urn);
-
-  // Update favorites count in auth store
-  const { user } = useAuthStore.getState();
-  if (user) {
-    const delta = nowLiked ? 1 : -1;
-    useAuthStore.setState({
-      user:
-        user.likes_count != null
-          ? { ...user, likes_count: user.likes_count + delta }
-          : { ...user, public_favorites_count: (user.public_favorites_count ?? 0) + delta },
-    });
-  }
-
-  // Update all liked tracks infinite queries
-  qc.setQueriesData<{ pages: PagedTracks[]; pageParams: unknown[] }>(
-    { queryKey: ['me', 'likes', 'tracks'] },
-    (old) => {
-      if (!old?.pages) return old;
-      if (nowLiked) {
-        const pages = [...old.pages];
-        pages[0] = {
-          ...pages[0],
-          collection: [track, ...pages[0].collection.filter((t) => t.urn !== track.urn)],
-        };
-        return { ...old, pages };
-      }
-      return {
-        ...old,
-        pages: old.pages.map((page) => ({
-          ...page,
-          collection: page.collection.filter((t) => t.urn !== track.urn),
-        })),
-      };
-    },
-  );
-
-  // Update single track query
+  // Update single track query (so `user_favorite` chips/buttons agree)
   qc.setQueryData<Track>(['track', track.urn], (old) => {
     if (!old) return old;
     return { ...old, user_favorite: nowLiked };
   });
-
-  // Delayed refetch for single track (eventual consistency).
-  // Liked tracks list is NOT invalidated — the optimistic cache update above
-  // is already correct, and SC API is eventually consistent so early refetch
-  // would overwrite optimistic data with stale results.
-  setTimeout(() => {
-    qc.invalidateQueries({ queryKey: ['track', track.urn], exact: true });
-  }, 5000);
 }

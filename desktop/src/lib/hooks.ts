@@ -2,18 +2,18 @@ import {
   type DefaultError,
   type InfiniteData,
   type QueryKey,
-  useInfiniteQuery,
   type UseInfiniteQueryResult,
+  useInfiniteQuery,
   useMutation,
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import {useEffect, useMemo, useRef} from 'react';
-import type {Track} from '../stores/player';
-import {api} from './api';
-import {initLikedUrns} from './likes';
-import {rememberLikedTracks, rememberTracks} from './offline-index';
-import {fetchRelatedTracks} from './related';
+import { useEffect, useMemo, useRef } from 'react';
+import type { Track } from '../stores/player';
+import { api } from './api';
+import { initLikedUrns } from './likes';
+import { rememberLikedTracks, rememberTracks } from './offline-index';
+import { fetchRelatedTracks } from './related';
 
 /* ── Types ─────────────────────────────────────────────────────── */
 
@@ -243,42 +243,6 @@ function pagedUrl(base: string, page: number, limit: number, extra?: string): st
   const sep = base.includes('?') ? '&' : '?';
   const params = `limit=${limit}&page=${page}${extra ? `&${extra}` : ''}`;
   return `${base}${sep}${params}`;
-}
-
-/* ── History ───────────────────────────────────────────────────── */
-
-export interface HistoryEntry {
-  id: string;
-  scTrackId: string;
-  title: string;
-  artistName: string;
-  artistUrn: string | null;
-  artworkUrl: string | null;
-  duration: number;
-  playedAt: string;
-}
-
-export function useHistory(limit = 50) {
-  const query = useInfiniteQuery({
-    queryKey: ['history'],
-    queryFn: async ({ pageParam = 0 }) => {
-      return api<{ collection: HistoryEntry[]; total: number }>(
-        `/history?limit=${limit}&offset=${pageParam}`,
-      );
-    },
-    initialPageParam: 0,
-    gcTime: INFINITE_GC_MS,
-    maxPages: 8,
-    getNextPageParam: (last, _all, lastOffset) => {
-      const nextOffset = (lastOffset as number) + limit;
-      return nextOffset < last.total ? nextOffset : undefined;
-    },
-    staleTime: 0,
-  });
-
-  const entries = useMemo(() => flattenCollectionPages(query.data?.pages), [query.data]);
-
-  return { entries, ...query };
 }
 
 /* ── Featured ─────────────────────────────────────────────────── */

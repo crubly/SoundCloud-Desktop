@@ -1,14 +1,14 @@
 import React from 'react';
-import {useTranslation} from 'react-i18next';
-import {playWhite14, RefreshCw} from '../../../lib/icons';
-import {usePerfMode} from '../../../lib/perf';
-import type {Track} from '../../../stores/player';
-import {usePlayerStore} from '../../../stores/player';
-import {HideLikedToggle} from '../../music/soundwave/hide-liked-toggle';
-import {HideListenedToggle} from '../../music/soundwave/hide-listened-toggle';
-import {LanguageFilter} from '../../music/soundwave/language-filter';
-import {WaveTrackHeader} from '../../music/soundwave/track-header';
-import {LiveWaveform} from '../../music/soundwave/waveform';
+import { useTranslation } from 'react-i18next';
+import { playWhite14, RefreshCw } from '../../../lib/icons';
+import { usePerfMode } from '../../../lib/perf';
+import type { Track } from '../../../stores/player';
+import { usePlayerStore } from '../../../stores/player';
+import { HideLikedToggle } from '../../music/soundwave/hide-liked-toggle';
+import { HideListenedToggle } from '../../music/soundwave/hide-listened-toggle';
+import { LanguageFilter } from '../../music/soundwave/language-filter';
+import { WaveTrackHeader } from '../../music/soundwave/track-header';
+import { LiveWaveform } from '../../music/soundwave/waveform';
 
 /** Индикатор «эфир подстраивается» — три живых бара, только когда играет. */
 function AdaptDots() {

@@ -8,6 +8,11 @@ use tokio::io::AsyncWriteExt;
 
 use crate::shared::constants::is_domain_whitelisted;
 
+/// Browser User-Agent, to "direct" image fetches — SoundCloud CDN serves
+/// non-browser clients fine, but a browser UA is the safest default.
+const BROWSER_UA: &str =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0 Safari/537.36";
+
 /// Permanent on-disk image cache.
 ///
 /// Lives in `app_data_dir/images/` (NOT cache_dir) so the OS never reclaims
@@ -166,13 +171,20 @@ pub async fn handle(encoded: &str) -> ImageResult {
     let mut data: Vec<u8> = Vec::new();
 
     for hop in crate::network::edge::expand_upstreams(upstreams) {
-        let resp = match state
-            .http_client
-            .get(&hop.url)
-            .header("X-Target", &encoded_for_header)
-            .send()
-            .await
-        {
+        // `direct` = fetch the target ourselves with a browser User-Agent
+        // instead of relaying via the image CDN.
+        let builder = if hop.url == "direct" {
+            state
+                .http_client
+                .get(target_url.as_str())
+                .header("User-Agent", BROWSER_UA)
+        } else {
+            state
+                .http_client
+                .get(&hop.url)
+                .header("X-Target", &encoded_for_header)
+        };
+        let resp = match builder.send().await {
             Ok(r) => r,
             Err(_) => {
                 hop.note(false);

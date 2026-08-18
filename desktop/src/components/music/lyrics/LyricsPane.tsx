@@ -1,11 +1,11 @@
-import {useQuery} from '@tanstack/react-query';
-import React, {useEffect, useState} from 'react';
-import {useTranslation} from 'react-i18next';
-import {Loader2, MicVocal, Search} from '../../../lib/icons';
-import {getLyricsByTrack, searchLyricsManual} from '../../../lib/lyrics';
-import {getTrackDisplay} from '../../../lib/track-display';
-import type {Track} from '../../../stores/player';
-import {LyricsSourceBadge, PlainLyrics, SyncedLyrics} from './SyncedLyrics';
+import { useQuery } from '@tanstack/react-query';
+import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Loader2, MicVocal, Search } from '../../../lib/icons';
+import { getLyricsForTrack, searchLyricsManual } from '../../../lib/lyrics';
+import { getTrackDisplay } from '../../../lib/track-display';
+import type { Track } from '../../../stores/player';
+import { LyricsSourceBadge, PlainLyrics, SyncedLyrics } from './SyncedLyrics';
 
 const ManualSearchPanel = React.memo(
   ({
@@ -83,8 +83,8 @@ export const LyricsPane = React.memo(({ track }: { track: Track }) => {
       : ['lyrics', 'track', track.urn],
     queryFn: () =>
       manualQuery
-        ? searchLyricsManual(manualQuery.artist, manualQuery.title, track.duration)
-        : getLyricsByTrack(track.urn),
+        ? searchLyricsManual(manualQuery.artist, manualQuery.title, track.duration, track.urn)
+        : getLyricsForTrack(track),
     staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
   });

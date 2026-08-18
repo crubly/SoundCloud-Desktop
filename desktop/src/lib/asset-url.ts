@@ -1,13 +1,7 @@
 import { getProxyPort, IMAGES_BASE } from './constants';
 import { isMac } from './platform';
 
-const WHITELIST = [
-  'localhost',
-  '127.0.0.1',
-  'tauri.localhost',
-  'scproxy.localhost',
-  'unpkg.com',
-];
+const WHITELIST = ['localhost', '127.0.0.1', 'tauri.localhost', 'scproxy.localhost', 'unpkg.com'];
 const RETRY_BYPASS_CACHE_PARAM = '__scproxy_bust';
 const LOCAL_PROXY_SHARDS = 20;
 

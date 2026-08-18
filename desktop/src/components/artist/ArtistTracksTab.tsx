@@ -1,16 +1,16 @@
-import {memo, useMemo} from 'react';
-import {useTranslation} from 'react-i18next';
-import {type Aura, auraRgba} from '../../lib/aura';
-import {dur, fc} from '../../lib/formatters';
-import {Calendar, ListMusic, Loader2, Music} from '../../lib/icons';
-import {usePerfMode} from '../../lib/perf';
-import {useArtistDisplay, useDisplayTitle} from '../../lib/track-display';
-import type {Track} from '../../stores/player';
-import {TrackStatusBadges} from '../music/TrackStatusBadges';
-import {VirtualList} from '../ui/VirtualList';
-import {ThemedTrackRow} from '../user/ThemedTrackRow';
-import type {TracksSort} from './types';
-import {useArtistTracks} from './useArtistData';
+import { memo, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { type Aura, auraRgba } from '../../lib/aura';
+import { dur, fc } from '../../lib/formatters';
+import { Calendar, ListMusic, Loader2, Music } from '../../lib/icons';
+import { usePerfMode } from '../../lib/perf';
+import { useArtistDisplay, useDisplayTitle } from '../../lib/track-display';
+import type { Track } from '../../stores/player';
+import { TrackStatusBadges } from '../music/TrackStatusBadges';
+import { VirtualList } from '../ui/VirtualList';
+import { ThemedTrackRow } from '../user/ThemedTrackRow';
+import type { TracksSort } from './types';
+import { useArtistTracks } from './useArtistData';
 
 export type TracksView = 'list' | 'years';
 
@@ -90,12 +90,7 @@ function ArtistTracksTabImpl({
   // popularity) and pull a deep page — otherwise low-play recent tracks (a fresh
   // album) fall past the popularity cutoff and the newest year bucket is empty.
   const yearsView = view === 'years';
-  const query = useArtistTracks(
-    artistId,
-    role,
-    yearsView ? 'recent' : sort,
-    yearsView ? 200 : 80,
-  );
+  const query = useArtistTracks(artistId, role, yearsView ? 'recent' : sort, yearsView ? 200 : 80);
   const tracks = query.data ?? [];
   const { available, wanted } = useMemo(() => partition(tracks), [tracks]);
   const yearBuckets = useMemo(

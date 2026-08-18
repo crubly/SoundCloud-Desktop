@@ -1,4 +1,11 @@
-import {type PointerEvent as ReactPointerEvent, type ReactNode, useEffect, useRef} from 'react';
+import {
+  type ReactNode,
+  type PointerEvent as ReactPointerEvent,
+  useCallback,
+  useEffect,
+  useRef,
+} from 'react';
+import { useWheelHorizontalScroll } from '../../lib/useWheelHorizontalScroll';
 
 interface HorizontalScrollProps {
   children: ReactNode;
@@ -9,6 +16,14 @@ const DRAG_THRESHOLD = 6;
 
 export function HorizontalScroll({ children, className = '' }: HorizontalScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const wheelRef = useWheelHorizontalScroll();
+  const setRef = useCallback(
+    (node: HTMLDivElement | null) => {
+      ref.current = node;
+      wheelRef(node);
+    },
+    [wheelRef],
+  );
   const dragStateRef = useRef({
     active: false,
     dragging: false,
@@ -70,7 +85,7 @@ export function HorizontalScroll({ children, className = '' }: HorizontalScrollP
 
   return (
     <div
-      ref={ref}
+      ref={setRef}
       onPointerDown={handlePointerDown}
       onPointerMove={handlePointerMove}
       onPointerUp={(e) => stopDragging(e.pointerId)}

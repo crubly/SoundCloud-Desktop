@@ -1,4 +1,4 @@
-import type {ReactNode} from 'react';
+import type { ReactNode } from 'react';
 import React from 'react';
 
 /** Рамка участка реки: заголовок + «почему это здесь». Узлы и ветки рисует
