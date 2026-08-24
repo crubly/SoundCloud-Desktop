@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { applyAccentVars } from '../../lib/apply-theme';
 import { art } from '../../lib/formatters';
+import { useMountTransition } from '../../lib/hooks';
 import { useLyricsStore } from '../../stores/lyrics';
 import { usePlayerStore } from '../../stores/player';
 import { useSettingsStore } from '../../stores/settings';
@@ -33,6 +34,10 @@ export const LyricsPanel = React.memo(() => {
   const visualizerEnabled = useSettingsStore((s) => s.lyricsVisualizer);
   const hideTuning = useSettingsStore((s) => s.fullscreenHideTuning);
 
+  // Keep the panel mounted while the exit animation plays (260ms) so closing
+  // fades out instead of cutting instantly; enter uses .animate-fade-in-up.
+  const { mounted, closing } = useMountTransition(open, 260);
+
   useEffect(() => {
     if (!open) return;
     const userAccent = useSettingsStore.getState().accentColor;
@@ -49,13 +54,17 @@ export const LyricsPanel = React.memo(() => {
     return () => window.removeEventListener('keydown', handler);
   }, [open, close]);
 
-  if (!open || !track) return null;
+  if (!mounted || !track) return null;
 
   const artwork500 = art(track.artwork_url, 't500x500');
   const splitPercent = splitRatio * 100;
 
   return (
-    <div className="fixed inset-0 z-[60] flex flex-col overflow-hidden animate-fade-in-up bg-[#08080a]">
+    <div
+      className={`fixed inset-0 z-[60] flex flex-col overflow-hidden bg-[#08080a] ${
+        closing ? 'lyrics-panel-exit' : 'animate-fade-in-up'
+      }`}
+    >
       <LyricsBackdrop artworkSrc={artwork500} color={color} />
       {visualizerEnabled && <LyricsVisualizer />}
 

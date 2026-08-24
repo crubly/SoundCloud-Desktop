@@ -35,6 +35,7 @@ import {
   Headphones as _Headphones,
   Heart as _Heart,
   Home as _Home,
+  Laptop as _Laptop,
   Library as _Library,
   Link as _Link,
   Link2 as _Link2,
@@ -136,6 +137,7 @@ export const Instagram = memo(({ size, className }: { size?: number; className?:
 ));
 export const Library = memo(_Library);
 export const LinkIcon = memo(_Link);
+export const Laptop = memo(_Laptop);
 export const ListMusic = memo(_ListMusic);
 export const ListPlus = memo(_ListPlus);
 export const Loader2 = memo(_Loader2);

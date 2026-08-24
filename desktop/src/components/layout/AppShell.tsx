@@ -267,7 +267,6 @@ const isInputEl = (el: EventTarget | null) =>
 export const AppShell = React.memo(() => {
   const [queueOpen, setQueueOpen] = useState(false);
   const [kbOpen, setKbOpen] = useState(false);
-  const lyricsOpen = useLyricsStore((s) => s.open);
   const sidebarCollapsed = useSettingsStore((s) => s.sidebarCollapsed);
   const volumeHoldRef = useRef<{ key: string | null; repeatCount: number; lastAt: number }>({
     key: null,
@@ -441,6 +440,7 @@ export const AppShell = React.memo(() => {
 
   return (
     <div
+      id="app-shell-root"
       className="flex flex-col h-screen relative overflow-hidden"
       style={{ ['--npb-left' as string]: `${sidebarWidth}px` }}
     >
@@ -460,11 +460,11 @@ export const AppShell = React.memo(() => {
           <QueuePanel open={queueOpen} onClose={onQueueClose} />
         </Suspense>
       )}
-      {lyricsOpen && (
-        <Suspense fallback={null}>
-          <LyricsPanel />
-        </Suspense>
-      )}
+      {/* Always mounted: LyricsPanel animates its own open AND close (exits null
+       * before it stops playing) — unmounting here would cut the exit off. */}
+      <Suspense fallback={null}>
+        <LyricsPanel />
+      </Suspense>
       <KeybindingsDialog open={kbOpen} onOpenChange={setKbOpen} />
     </div>
   );

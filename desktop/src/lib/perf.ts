@@ -118,22 +118,23 @@ export function getEffectivePerfMode(): PerfMode {
   return perfOverride ?? useSettingsStore.getState().perfMode;
 }
 
-const TICK_MS = 200;
-const JANK_MS = 500;
-const JANK_HITS = 3;
+const TICK_MS = 150;
+const JANK_MS = 450;
+const JANK_HITS = 2;
 const JANK_COOLDOWN_MS = 5000;
-const RECOVER_TICKS = 60;
-const CLEAN_MS = 300;
+const RECOVER_TICKS = 150;
+const CLEAN_MS = 220;
 
 let governorInstalled = false;
 
 /**
  * Interval-based frame-gap monitor. The old rAF approach only accumulates jank
  * samples while rAF is scheduled (one heavy gap per freeze, ~10-30s to trip).
- * A 200ms timer measures *event-loop* blocking directly — a gap > 500ms means
+ * A 150ms timer measures *event-loop* blocking directly — a gap > 450ms means
  * the main thread just stalled (screen recording / heavy compositing starves
  * the renderer). Trips to `light` within ~1-2s of sustained jank, and lifts
- * after ~12s of smooth pacing. Idempotent; logs transitions to desktop.log.
+ * after ~20s of clean pacing (kept long so an active recording doesn't flap the
+ * design back and forth). Idempotent; logs transitions to desktop.log.
  */
 export function setupPerfGovernor(): void {
   if (governorInstalled || typeof document === 'undefined' || typeof window === 'undefined') {

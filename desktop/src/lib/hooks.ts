@@ -8,7 +8,7 @@ import {
   useQuery,
   useQueryClient,
 } from '@tanstack/react-query';
-import { useEffect, useMemo, useRef } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { Track } from '../stores/player';
 import { api } from './api';
 import { initLikedUrns } from './likes';
@@ -1105,4 +1105,33 @@ export function useInfiniteScroll(
   }, [hasNextPage, isFetchingNextPage, fetchNextPage]);
 
   return ref;
+}
+
+/* ── Mount-through-exit ─────────────────────────────────────────── */
+
+/**
+ * Keeps a component mounted until its exit transition finishes so BOTH open and
+ * close can animate (a bare conditional unmount would cut the close off).
+ * Returns `mounted` (render-or-null) and `closing` (true while the exit plays).
+ */
+export function useMountTransition(open: boolean, exitMs: number) {
+  const [mounted, setMounted] = useState(open);
+  const [closing, setClosing] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      setMounted(true);
+      setClosing(false);
+      return;
+    }
+    if (!mounted) return;
+    setClosing(true);
+    const t = setTimeout(() => {
+      setMounted(false);
+      setClosing(false);
+    }, exitMs);
+    return () => clearTimeout(t);
+  }, [open, mounted, exitMs]);
+
+  return { mounted, closing };
 }

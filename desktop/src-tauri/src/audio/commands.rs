@@ -133,6 +133,34 @@ pub fn audio_set_metadata(
     engine::set_metadata(title, artist, cover_url, duration_secs, state);
 }
 
+/// Enables/disables the native Touch Bar integration (karaoke lyrics +
+/// transport). The frontend only sends this on macOS.
+#[tauri::command]
+pub fn touchbar_set_enabled(enabled: bool) {
+    crate::touchbar::set_enabled(enabled);
+}
+
+/// Full touch-bar preference (mode / element order+visibility / always-lyrics).
+#[tauri::command]
+pub fn touchbar_set_config(config: crate::touchbar::TouchBarConfig) {
+    crate::touchbar::set_config(config);
+}
+
+/// Whether this Mac has a physical Touch Bar. The frontend only calls this on
+/// macOS; it gates the Touch Bar settings tab.
+#[tauri::command]
+pub fn touchbar_supported() -> bool {
+    crate::touchbar::supported()
+}
+
+/// Hard-clear the karaoke line on the Touch Bar. Called the instant the track
+/// changes so the previous song's lyrics never linger/attach to the new one,
+/// even in the "always show lyrics" (hold) mode.
+#[tauri::command]
+pub fn touchbar_reset_lyrics() {
+    crate::touchbar::reset_lyrics();
+}
+
 #[tauri::command]
 pub fn audio_set_playback_state(playing: bool, state: State<'_, AudioState>) {
     engine::set_playback_state(playing, state);
@@ -168,15 +196,19 @@ pub async fn save_track_to_path(cache_path: String, dest_path: String) -> Result
 
 #[tauri::command]
 pub fn audio_set_lyrics_timeline(
+    app: crate::rt::AppHandle,
     lines: Vec<crate::audio::types::LyricsTimingLine>,
     state: State<'_, AudioState>,
 ) {
-    timing::audio_set_lyrics_timeline(lines, state);
+    timing::audio_set_lyrics_timeline(app, lines, state);
 }
 
 #[tauri::command]
-pub fn audio_clear_lyrics_timeline(state: State<'_, AudioState>) {
-    timing::audio_clear_lyrics_timeline(state);
+pub fn audio_clear_lyrics_timeline(
+    app: crate::rt::AppHandle,
+    state: State<'_, AudioState>,
+) {
+    timing::audio_clear_lyrics_timeline(app, state);
 }
 
 #[tauri::command]

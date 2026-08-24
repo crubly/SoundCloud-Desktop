@@ -5,8 +5,10 @@ import { useTranslation } from 'react-i18next';
 import { getCurrentTime, seek } from '../../../lib/audio';
 import { Search } from '../../../lib/icons';
 import type { LyricLine, LyricsSource } from '../../../lib/lyrics';
+import { buildDisplayLines, PAUSE_MARKER } from '../../../lib/lyrics-timeline';
 import { usePerfMode } from '../../../lib/perf';
 import { usePlayerStore } from '../../../stores/player';
+import { useSettingsStore } from '../../../stores/settings';
 
 const SOURCE_LABELS: Record<LyricsSource, string> = {
   lrclib: 'LRCLib',
@@ -18,38 +20,9 @@ const SOURCE_LABELS: Record<LyricsSource, string> = {
   cache: '',
 };
 
-const PAUSE_MARKER = '♪♪♪';
-const PAUSE_GAP_THRESHOLD = 4.5; // seconds — when to insert ♪♪♪
-
-type DisplayLine = LyricLine & { pause?: boolean; duration?: number };
-
-function buildDisplayLines(lines: LyricLine[]): DisplayLine[] {
-  if (!lines.length) return [];
-  const out: DisplayLine[] = [];
-  for (let i = 0; i < lines.length; i++) {
-    const cur = lines[i];
-    const prev = lines[i - 1];
-    if (prev) {
-      const gap = cur.time - prev.time;
-      if (gap >= PAUSE_GAP_THRESHOLD) {
-        out.push({
-          time: prev.time + 0.5,
-          text: PAUSE_MARKER,
-          pause: true,
-          duration: gap - 0.6,
-        });
-      }
-    } else if (cur.time >= PAUSE_GAP_THRESHOLD) {
-      out.push({
-        time: 0.05,
-        text: PAUSE_MARKER,
-        pause: true,
-        duration: Math.max(0.5, cur.time - 0.1),
-      });
-    }
-    out.push(cur);
-  }
-  return out;
+interface CharCell {
+  ch: string;
+  animated: boolean;
 }
 
 function clamp01(v: number) {
@@ -58,11 +31,6 @@ function clamp01(v: number) {
 
 function isAnimatedChar(ch: string) {
   return !/^\s$/u.test(ch);
-}
-
-interface CharCell {
-  ch: string;
-  animated: boolean;
 }
 
 function splitChars(text: string): CharCell[] {
@@ -101,7 +69,6 @@ export const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
   const pauseBarsRef = useRef<Array<HTMLElement | null>>([]);
   const manualScrollRef = useRef(false);
   const lastScrollTsRef = useRef(0);
-  const lineProgressRef = useRef(0);
   linesRef.current = displayLines;
 
   useEffect(() => {
@@ -116,8 +83,11 @@ export const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
       el.querySelector<HTMLElement>('.lyric-pause-bar'),
     );
     activeRef.current = -1;
-    lineProgressRef.current = 0;
     manualScrollRef.current = false;
+
+    // Per-index karaoke progress (a verse and the ♪♪♪ marker filling through an
+    // instrumental break both animate at once, so smoothing is per line).
+    const lineProgress = Array.from({ length: displayLines.length }, () => 0);
 
     const markManual = () => {
       manualScrollRef.current = true;
@@ -127,7 +97,12 @@ export const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
     container.addEventListener('pointerdown', markManual);
 
     void invoke('audio_set_lyrics_timeline', {
-      lines: displayLines.map((line) => ({ timeSecs: line.time })),
+      lines: displayLines.map((line) => ({
+        timeSecs: line.time,
+        text: line.text ?? null,
+        endSecs: line.end ?? null,
+        pause: !!line.pause,
+      })),
     });
 
     /** Per-char "head" sweeps left-to-right across the line.
@@ -191,12 +166,19 @@ export const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
 
       const prev = activeRef.current;
       activeRef.current = idx;
-      lineProgressRef.current = 0;
+      if (idx >= 0) lineProgress[idx] = 0;
 
+      // While an instrumental break (♪♪♪) is active the verse right before it
+      // HOLDS its karaoke progress instead of being forced to past/completed —
+      // it only counts as sung once the next verse actually starts.
+      const activeIsPause = idx >= 0 ? !!linesRef.current[idx]?.pause : false;
       for (let i = 0; i < lineEls.length; i++) {
         let state: string;
         if (i === idx) state = 'active';
-        else if (i === idx - 1) state = 'past-near';
+        else if (activeIsPause && i === idx - 1) state = 'hold';
+        else if (activeIsPause) {
+          state = i === idx + 1 ? 'next-near' : i < idx ? 'past' : 'next';
+        } else if (i === idx - 1) state = 'past-near';
         else if (i === idx + 1) state = 'next-near';
         else if (idx >= 0 && i < idx) state = 'past';
         else state = 'next';
@@ -231,17 +213,30 @@ export const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
 
       const idx = activeRef.current;
       if (idx < 0 || idx >= linesRef.current.length) return;
-      const cur = linesRef.current[idx];
-      const next = linesRef.current[idx + 1];
-      const dur = Math.max(0.4, (next?.time ?? cur.time + 2.6) - cur.time);
-      const target = clamp01((getCurrentTime() - cur.time) / dur);
 
-      const prev = lineProgressRef.current;
-      const diff = target - prev;
-      const smoothed =
-        diff < 0 ? target : prev + diff * (diff > 0.18 || target > 0.92 ? 0.7 : 0.32);
-      lineProgressRef.current = smoothed;
-      writeLineProgress(idx, smoothed);
+      const driveLine = (li: number) => {
+        const line = linesRef.current[li];
+        if (!line) return;
+        const next = linesRef.current[li + 1];
+        // Karaoke span is the gap to the NEXT VERSE (line.end, markers skipped):
+        // the verse preceding an instrumental break fills across the whole break
+        // and completes exactly when the next verse starts — never "in 0.5s".
+        const dur = Math.max(0.4, (line.end ?? next?.time ?? line.time + 2.6) - line.time);
+        const target = clamp01((getCurrentTime() - line.time) / dur);
+        const prev = lineProgress[li] ?? 0;
+        const diff = target - prev;
+        const smoothed =
+          diff < 0 ? target : prev + diff * (diff > 0.18 || target > 0.92 ? 0.7 : 0.32);
+        lineProgress[li] = smoothed;
+        writeLineProgress(li, smoothed);
+      };
+
+      driveLine(idx);
+
+      // While an instrumental break is active, keep the verse before ♪♪♪ filling
+      // so it isn't stuck at the low progress it had when the marker took over.
+      const active = linesRef.current[idx];
+      if (active?.pause && idx > 0) driveLine(idx - 1);
     };
     rafId = requestAnimationFrame(tick);
 
@@ -267,7 +262,11 @@ export const SyncedLyrics = React.memo(({ lines }: { lines: LyricLine[] }) => {
       container.removeEventListener('wheel', markManual);
       container.removeEventListener('touchstart', markManual);
       container.removeEventListener('pointerdown', markManual);
-      void invoke('audio_clear_lyrics_timeline');
+      // "Lyrics always" keeps the Touch Bar karaoke running even when the panel
+      // closes — only blank it when the user disabled that preference.
+      if (!useSettingsStore.getState().touchBarLyricsAlways) {
+        void invoke('audio_clear_lyrics_timeline');
+      }
       unlistenPromise.then((unlisten) => unlisten());
       unsubPlayer();
     };

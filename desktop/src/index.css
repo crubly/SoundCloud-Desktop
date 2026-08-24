@@ -273,6 +273,22 @@ select,
   animation: fadeInUp 0.5s var(--ease-apple) both;
 }
 
+/* Fullscreen lyrics panel — gentle exit (enter uses .animate-fade-in-up) */
+@keyframes lyricsPanelExit {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.985) translateY(14px);
+  }
+}
+
+.lyrics-panel-exit {
+  animation: lyricsPanelExit 0.26s var(--ease-apple) both;
+}
+
 .hero-greeting {
   color: rgba(255, 255, 255, 0.96);
 }
@@ -439,6 +455,15 @@ select,
   transform: scale(0.968) translate3d(12px, 0, 0);
 }
 
+/* Instrumental break (♪♪♪): the verse before it holds its karaoke progress —
+   partially-filled chars stay lit/dim by --char-progress instead of being
+   force-completed like a past line. Fills to 100% as the break ends. */
+.lyric-line[data-state="hold"] {
+  color: rgba(255, 255, 255, 0.55);
+  opacity: 0.7;
+  transform: scale(0.992) translate3d(-4px, 0, 0);
+}
+
 /* ── Lyrics pause marker (♪♪♪) ─────────────────────────── */
 .lyric-pause {
   cursor: default;
@@ -465,9 +490,11 @@ select,
   transition: none;
 }
 
+/* Width is driven inline by the karaoke rAF (writeLineProgress); the keyboard
+   state rules below only sweeten the non-animated states. NO width transition
+   here — it would restart on every 30fps inline update and freeze the bar. */
 .lyric-pause-bar[data-state="active"] {
   width: 100%;
-  transition: width var(--pause-duration, 2s) linear;
 }
 
 .lyric-pause-bar[data-state="past"] {

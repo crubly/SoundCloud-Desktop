@@ -6,6 +6,7 @@ mod network;
 mod rt;
 mod scapi;
 mod shared;
+mod touchbar;
 mod track_cache;
 mod yt;
 
@@ -154,6 +155,7 @@ pub fn run() {
             audio::start_media_controls(app.handle());
             audio::start_default_output_monitor(app.handle());
             audio::start_fft_thread(app.handle().clone(), analyser_buffer);
+            touchbar::start_touchbar(app.handle());
 
             app.manage(app::popover::TrayState::default());
             app::tray::setup_tray(app).expect("failed to setup tray");
@@ -212,6 +214,10 @@ pub fn run() {
             audio::audio_set_follow_default_output,
             audio::audio_set_lyrics_timeline,
             audio::audio_clear_lyrics_timeline,
+            audio::touchbar_set_enabled,
+            audio::touchbar_set_config,
+            audio::touchbar_supported,
+            audio::touchbar_reset_lyrics,
             audio::audio_set_comments_timeline,
             audio::audio_clear_comments_timeline,
             audio::audio_preview_play,

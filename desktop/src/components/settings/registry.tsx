@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { Database, Globe, Headphones, Link, Sparkles } from '../../lib/icons';
+import { Database, Globe, Headphones, Laptop, Link, Sparkles } from '../../lib/icons';
 import { AudioDeviceCard } from './cards/AudioDeviceCard';
 import { BarCard } from './cards/BarCard';
 import { CacheCard } from './cards/CacheCard';
@@ -11,8 +11,15 @@ import { PlaybackCard } from './cards/PlaybackCard';
 import { SoundForgeCard } from './cards/SoundForgeCard';
 import { StartupCard } from './cards/StartupCard';
 import { ThemeCard } from './cards/ThemeCard';
+import { TouchBarCard } from './cards/TouchBarCard';
 
-export type SettingsCategoryId = 'general' | 'appearance' | 'audio' | 'integrations' | 'storage';
+export type SettingsCategoryId =
+  | 'general'
+  | 'appearance'
+  | 'audio'
+  | 'integrations'
+  | 'storage'
+  | 'touchbar';
 
 export interface SettingsCategory {
   id: SettingsCategoryId;
@@ -79,5 +86,11 @@ export const SETTINGS_CATEGORIES: SettingsCategory[] = [
         <CacheCard />
       </>
     ),
+  },
+  {
+    id: 'touchbar',
+    labelKey: 'settings.catTouchBar',
+    icon: <Laptop size={17} />,
+    Body: () => <TouchBarCard />,
   },
 ];

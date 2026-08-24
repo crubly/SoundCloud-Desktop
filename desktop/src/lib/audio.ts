@@ -1,9 +1,9 @@
 import { listen } from '@tauri-apps/api/event';
 import { toast } from 'sonner';
 import i18n from '../i18n';
+import { useLyricsStore } from '../stores/lyrics';
 import type { Track } from '../stores/player';
 import { usePlayerStore } from '../stores/player';
-import { useLyricsStore } from '../stores/lyrics';
 import { useSettingsStore } from '../stores/settings';
 import {
   api,
@@ -24,15 +24,12 @@ import { trackedInvoke as invoke } from './diagnostics';
 import { isUrnDisliked } from './dislikes';
 import { recordEvent } from './events';
 import { art } from './formatters';
+import { getLyricsForTrack } from './lyrics';
+import { toTimelineLines } from './lyrics-timeline';
 import { rememberTracks } from './offline-index';
 import { getUrnCluster, recordClusterFeedback } from './recsFeedback';
 import { getArtistDisplay, getDisplayTitle } from './track-display';
-import {
-  ensureYouTubeAudio,
-  isYouTubeUrn,
-  type YouTubeStage,
-  youtubeIdFromUrn,
-} from './youtube';
+import { ensureYouTubeAudio, isYouTubeUrn, type YouTubeStage, youtubeIdFromUrn } from './youtube';
 
 const SKIP_THRESHOLD_SEC = 30;
 /** Минимум, чтобы засчитать «прослушано полностью» для коротких треков (50% длительности). */
@@ -811,6 +808,64 @@ listen<number>('media:seek-relative', (e) => {
     seek(Math.min(getCurrentTime() + offset, getDuration()));
   } else {
     seek(Math.max(getCurrentTime() + offset, 0));
+  }
+});
+
+/* ── Native Touch Bar (macOS) ─────────────────────────────────-- */
+
+const pushTouchBar = () => {
+  const s = useSettingsStore.getState();
+  invoke('touchbar_set_enabled', { enabled: s.touchBar }).catch(console.error);
+  invoke('touchbar_set_config', {
+    config: {
+      mode: s.touchBarMode,
+      elements: s.touchBarElements.filter((e) => e.enabled).map((e) => e.id),
+      lyricsAlways: s.touchBarLyricsAlways,
+    },
+  }).catch(console.error);
+};
+useSettingsStore.subscribe((state, prev) => {
+  if (
+    state.touchBar !== prev.touchBar ||
+    state.touchBarMode !== prev.touchBarMode ||
+    state.touchBarLyricsAlways !== prev.touchBarLyricsAlways ||
+    state.touchBarElements !== prev.touchBarElements
+  ) {
+    pushTouchBar();
+    pushAlwaysLyrics(usePlayerStore.getState().currentTrack);
+  }
+});
+pushTouchBar();
+
+/* ── Touch Bar always-lyrics: keep the karaoke fed even without the panel ── */
+
+let lastLyricsUrn: string | null = null;
+
+async function pushAlwaysLyrics(track: Track | null) {
+  const s = useSettingsStore.getState();
+  if (!s.touchBar || !s.touchBarLyricsAlways || !track || track.urn === lastLyricsUrn) return;
+  lastLyricsUrn = track.urn;
+  const lyrics = await getLyricsForTrack(track);
+  if (lyrics?.synced?.length) {
+    invoke('audio_set_lyrics_timeline', { lines: toTimelineLines(lyrics.synced) }).catch(
+      console.error,
+    );
+  } else {
+    // New track without synced lyrics: drop whatever the previous track left
+    // on the Touch Bar instead of replaying it against the wrong position.
+    invoke('audio_clear_lyrics_timeline').catch(console.error);
+  }
+}
+usePlayerStore.subscribe((s, prev) => {
+  if (s.currentTrack?.urn !== prev.currentTrack?.urn) {
+    lastLyricsUrn = null;
+    // Wipe the bar and kill the previous track's timeline the instant the
+    // track changes — not after the new lyrics finish loading — otherwise the
+    // old song's lines keep feeding the Touch Bar at the new position and can
+    // even be held on by the "always lyrics" mode.
+    invoke('touchbar_reset_lyrics').catch(console.error);
+    invoke('audio_clear_lyrics_timeline').catch(console.error);
+    void pushAlwaysLyrics(s.currentTrack);
   }
 });
 

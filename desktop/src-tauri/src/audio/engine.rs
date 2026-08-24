@@ -537,6 +537,7 @@ pub fn set_metadata(
     duration_secs: f64,
     state: State<'_, AudioState>,
 ) {
+    crate::touchbar::update_metadata(&title, &artist, cover_url.as_deref());
     if let Some(tx) = state.media_tx.lock().unwrap().as_ref() {
         tx.send(MediaCmd::SetMetadata {
             title,
@@ -549,6 +550,7 @@ pub fn set_metadata(
 }
 
 pub fn set_playback_state(playing: bool, state: State<'_, AudioState>) {
+    crate::touchbar::update_playing(playing);
     if let Some(tx) = state.media_tx.lock().unwrap().as_ref() {
         tx.send(MediaCmd::SetPlaying(playing)).ok();
     }

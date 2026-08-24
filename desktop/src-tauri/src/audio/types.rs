@@ -82,6 +82,17 @@ pub const STALL_SUPPRESS_MS: u64 = 4_000;
 #[serde(rename_all = "camelCase")]
 pub struct LyricsTimingLine {
     pub time_secs: f64,
+    /// Lyric text of this line (drives the touch bar karaoke).
+    #[serde(default)]
+    pub text: Option<String>,
+    /// Segment end — the natural stop of the fill bar for this line. When
+    /// absent the line only acts as a marker (e.g. ♪♪♪ verse placeholders).
+    #[serde(default)]
+    pub end_secs: Option<f64>,
+    /// Instrumental-break marker (♪♪♪). Never shown on the Touch Bar karaoke:
+    /// the previous real verse is held instead, so it fills across the break.
+    #[serde(default)]
+    pub pause: bool,
 }
 
 #[derive(Clone, serde::Deserialize, serde::Serialize)]

@@ -17,6 +17,21 @@ export interface BarElements {
   cluster: boolean;
   timeline: boolean;
 }
+export type TouchBarMode = 'active' | 'always' | 'overall';
+export type TouchBarElementId = 'cover' | 'info' | 'lyrics' | 'prev' | 'play' | 'next';
+export interface TouchBarElementState {
+  id: TouchBarElementId;
+  enabled: boolean;
+}
+/** Default Touch Bar strip: cover → info → lyrics → transport controls. */
+export const DEFAULT_TOUCHBAR_ELEMENTS: TouchBarElementState[] = [
+  { id: 'cover', enabled: true },
+  { id: 'info', enabled: true },
+  { id: 'lyrics', enabled: true },
+  { id: 'prev', enabled: true },
+  { id: 'play', enabled: true },
+  { id: 'next', enabled: true },
+];
 export const BAR_ELEMENT_KEYS = [
   'playback',
   'tuning',
@@ -106,6 +121,10 @@ export interface SettingsState {
   soundwaveHideListened: boolean;
   lyricsVisualizer: boolean;
   artistWaveCollapsed: boolean;
+  touchBar: boolean;
+  touchBarMode: TouchBarMode;
+  touchBarElements: TouchBarElementState[];
+  touchBarLyricsAlways: boolean;
   wallhavenApiKey: string;
   fullscreenHideTuning: boolean;
   audioEffect: AudioEffect;
@@ -143,6 +162,10 @@ export interface SettingsState {
   setSoundwaveHideLiked: (v: boolean) => void;
   setSoundwaveHideListened: (v: boolean) => void;
   setLyricsVisualizer: (v: boolean) => void;
+  setTouchBar: (v: boolean) => void;
+  setTouchBarMode: (mode: TouchBarMode) => void;
+  setTouchBarElements: (elements: TouchBarElementState[]) => void;
+  setTouchBarLyricsAlways: (v: boolean) => void;
   setArtistWaveCollapsed: (v: boolean) => void;
   setWallhavenApiKey: (key: string) => void;
   setFullscreenHideTuning: (v: boolean) => void;
@@ -186,6 +209,10 @@ const DEFAULTS = {
   soundwaveHideListened: true,
   lyricsVisualizer: false,
   artistWaveCollapsed: false,
+  touchBar: true,
+  touchBarMode: 'always' as TouchBarMode,
+  touchBarElements: DEFAULT_TOUCHBAR_ELEMENTS,
+  touchBarLyricsAlways: true,
   wallhavenApiKey: '',
   fullscreenHideTuning: true,
   audioEffect: 'off' as AudioEffect,
@@ -259,6 +286,10 @@ export const useSettingsStore = create<SettingsState>()(
       setSoundwaveHideLiked: (soundwaveHideLiked) => set({ soundwaveHideLiked }),
       setSoundwaveHideListened: (soundwaveHideListened) => set({ soundwaveHideListened }),
       setLyricsVisualizer: (lyricsVisualizer) => set({ lyricsVisualizer }),
+      setTouchBar: (touchBar) => set({ touchBar }),
+      setTouchBarMode: (touchBarMode) => set({ touchBarMode }),
+      setTouchBarElements: (touchBarElements) => set({ touchBarElements }),
+      setTouchBarLyricsAlways: (touchBarLyricsAlways) => set({ touchBarLyricsAlways }),
       setArtistWaveCollapsed: (artistWaveCollapsed) => set({ artistWaveCollapsed }),
       setWallhavenApiKey: (wallhavenApiKey) => set({ wallhavenApiKey }),
       setFullscreenHideTuning: (fullscreenHideTuning) => set({ fullscreenHideTuning }),
@@ -281,10 +312,11 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'sc-settings',
       storage: createJSONStorage(() => tauriStorage),
-      version: 23,
+      version: 24,
       migrate: (persistedState) => {
         const prev = (persistedState ?? {}) as Partial<SettingsState> & {
           soundwaveDiversity?: number;
+          touchBarElements?: TouchBarElementState[];
         };
         // v13 → v14: diversity-slider (0..1) → toggle ('similar' | 'diverse').
         // > 0.5 трактуем как 'diverse', иначе 'similar'.
@@ -294,11 +326,21 @@ export const useSettingsStore = create<SettingsState>()(
             : 'similar';
         // v23: новый дефолт производительности — medium (меньше блюра/частиц,
         // заметно меньший нагрев). Красоту можно вернуть в Настройки → Оформление.
+        // v24: Touch Bar-конфигурация (режим / порядок + видимость элементов /
+        // always-лирика). Недостающие поля подтягиваются из DEFAULTS.
+        const persistedElements = Array.isArray(prev.touchBarElements)
+          ? prev.touchBarElements.filter(
+              (e) => e && DEFAULT_TOUCHBAR_ELEMENTS.some((d) => d.id === e.id),
+            )
+          : [];
+        const touchBarElements =
+          persistedElements.length > 0 ? persistedElements : DEFAULT_TOUCHBAR_ELEMENTS;
         return {
           ...DEFAULTS,
           ...prev,
           soundwaveMode: prev.soundwaveMode ?? inferredMode,
           perfMode: prev.perfMode === undefined ? DEFAULTS.perfMode : 'medium',
+          touchBarElements,
         } as SettingsState;
       },
       partialize: (s) => ({
@@ -333,6 +375,10 @@ export const useSettingsStore = create<SettingsState>()(
         soundwaveHideListened: s.soundwaveHideListened,
         lyricsVisualizer: s.lyricsVisualizer,
         artistWaveCollapsed: s.artistWaveCollapsed,
+        touchBar: s.touchBar,
+        touchBarMode: s.touchBarMode,
+        touchBarElements: s.touchBarElements,
+        touchBarLyricsAlways: s.touchBarLyricsAlways,
         wallhavenApiKey: s.wallhavenApiKey,
         fullscreenHideTuning: s.fullscreenHideTuning,
         audioEffect: s.audioEffect,
