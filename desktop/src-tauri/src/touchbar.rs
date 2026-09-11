@@ -70,6 +70,7 @@ pub struct TouchBarConfig {
 
 #[cfg(target_os = "macos")]
 mod detail {
+    use std::sync::atomic::{AtomicU32, AtomicU64, Ordering};
     use std::sync::{mpsc, LazyLock, Mutex, OnceLock};
     use std::time::Duration;
 
@@ -558,6 +559,31 @@ use objc2_app_kit::{
         }
     }
 
+    /// Millisecond wall-clock of the last state log (throttled to ~1 Hz).
+    static STATE_LOG_LAST: AtomicU64 = AtomicU64::new(0);
+    fn state_clock() -> u64 {
+        std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0)
+    }
+
+    fn log_state(handle: &AppHandle, snap: &BarStateSnap, lit: usize, dim: bool, ui: &TouchBarUI) {
+        let now = state_clock();
+        let prev = STATE_LOG_LAST.swap(now, Ordering::Relaxed);
+        if now.wrapping_sub(prev) < 1000 {
+            return;
+        }
+        log_native(
+            handle,
+            "INFO",
+            format!(
+                "[TB-state] enabled={} mode={:?} playing={} lit={} dim={} offset={:.1} viewport={:.0} lyrics_len={} lyrics_always={}",
+                snap.enabled, snap.mode, snap.playing, lit, dim, ui.applied.offset, ui.applied.viewport, snap.lyrics.len(), snap.lyrics_always,
+            ),
+        );
+    }
+
     // -----------------------------------------------------------------------
     // Main-thread state application.
     // -----------------------------------------------------------------------
@@ -638,14 +664,25 @@ use objc2_app_kit::{
             STATE.lock().unwrap().modal_presented = false;
         }
 
+        let full_len = snapshot.lyrics.chars().count();
+        let lit = scaled_lit(snapshot.fraction, full_len) as usize;
+        let dim = lit == 0 && snapshot.lyrics_always && full_len > 0;
+
         if snapshot.enabled {
-            apply_snapshot(mtm, &mut ui, &snapshot);
+            apply_snapshot(mtm, &mut ui, &snapshot, lit, dim);
         }
 
+        log_state(_handle, &snapshot, lit, dim, &ui);
         *UI.lock().unwrap() = Some(ui);
     }
 
-    fn apply_snapshot(mtm: MainThreadMarker, ui: &mut TouchBarUI, snap: &BarStateSnap) {
+    fn apply_snapshot(
+        mtm: MainThreadMarker,
+        ui: &mut TouchBarUI,
+        snap: &BarStateSnap,
+        lit: usize,
+        dim: bool,
+    ) {
         let title_text = first_words(&snap.title, 2);
         if ui.applied.title != title_text {
             let attr = label_attr(mtm, &title_text, true);
@@ -687,9 +724,6 @@ use objc2_app_kit::{
         // "Lyrics always" keeps the last known line visible even when nothing
         // is being sung right now (panel closed / instrumental gap): it is
         // drawn wholly dimmed instead of the accent-colored sung prefix.
-        let full_len = snap.lyrics.chars().count();
-        let lit = scaled_lit(snap.fraction, full_len) as usize;
-        let dim = lit == 0 && snap.lyrics_always && full_len > 0;
         if ui.applied.lit_text != snap.lyrics
             || ui.applied.lit_prefix != lit
             || ui.applied.dim != dim
