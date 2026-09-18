@@ -58,6 +58,26 @@ const listeners = new Set<() => void>();
 const playbackTimeListeners = new Set<() => void>();
 const API_PREVIEW_DURATION_MS = 30_000;
 
+// Tauri invocations are asynchronous. Keep A-B commands ordered so a delayed
+// clear from the previous track cannot arrive after the new track's saved loop.
+let abLoopSyncChain: Promise<void> = Promise.resolve();
+
+function syncAbLoop(ab: { a: number; b: number | null } | null): Promise<void> {
+  const bounds = ab?.b != null ? { a: ab.a, b: ab.b } : null;
+  const next = abLoopSyncChain.then(async () => {
+    try {
+      await invoke('audio_set_ab_loop', {
+        a: bounds?.a ?? null,
+        b: bounds?.b ?? null,
+      });
+    } catch (error) {
+      console.error(error);
+    }
+  });
+  abLoopSyncChain = next.catch(() => undefined);
+  return next;
+}
+
 // The 10Hz tick fan-out drives every UI subscriber (progress, waveform clip-path,
 // time readouts). When the window is hidden it's pure waste — the WebView doesn't
 // throttle us, and MediaSession/Discord presence run off Rust events, not this.
@@ -351,9 +371,13 @@ async function loadTrack(track: Track) {
   if (isNewTrack) {
     // This is a transition, not a user clearing the loop: keep the saved record.
     usePlayerStore.getState().restoreAbLoop(null);
+    await syncAbLoop(null);
     await waitForAbLoopLibrary();
     if (gen !== loadGen || currentUrn !== urn) return;
-    usePlayerStore.getState().restoreAbLoop(useAbLoopLibraryStore.getState().get(urn));
+    const savedLoop = useAbLoopLibraryStore.getState().get(urn);
+    usePlayerStore.getState().restoreAbLoop(savedLoop);
+    await syncAbLoop(savedLoop);
+    if (gen !== loadGen || currentUrn !== urn) return;
   }
 
   void hydrateTrackMetadata(track, gen);
@@ -726,12 +750,7 @@ usePlayerStore.subscribe((state, prev) => {
 
   // A-B loop: only push an active region (both bounds set); otherwise clear it.
   if (state.abLoop !== prev.abLoop) {
-    const ab = state.abLoop;
-    const active = ab != null && ab.b != null;
-    invoke('audio_set_ab_loop', {
-      a: active ? ab.a : null,
-      b: active ? ab.b : null,
-    }).catch(console.error);
+    void syncAbLoop(state.abLoop);
   }
 });
 
