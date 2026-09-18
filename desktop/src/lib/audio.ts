@@ -2,6 +2,7 @@ import { listen } from '@tauri-apps/api/event';
 import { toast } from 'sonner';
 import i18n from '../i18n';
 import { useLyricsStore } from '../stores/lyrics';
+import { useAbLoopLibraryStore, waitForAbLoopLibrary } from '../stores/ab-loops';
 import type { Track } from '../stores/player';
 import { usePlayerStore } from '../stores/player';
 import { useSettingsStore } from '../stores/settings';
@@ -333,8 +334,12 @@ async function loadTrack(track: Track) {
   // NOT on same-track reloads (repeat-one, device/EQ reload, or the loop's own
   // restart). Done here, after currentUrn is advanced, so the resulting store
   // notification doesn't re-enter the track-changed branch of the subscriber.
-  if (isNewTrack && usePlayerStore.getState().abLoop) {
-    usePlayerStore.getState().clearAbLoop();
+  if (isNewTrack) {
+    // This is a transition, not a user clearing the loop: keep the saved record.
+    usePlayerStore.getState().restoreAbLoop(null);
+    await waitForAbLoopLibrary();
+    if (gen !== loadGen || currentUrn !== urn) return;
+    usePlayerStore.getState().restoreAbLoop(useAbLoopLibraryStore.getState().get(urn));
   }
 
   void hydrateTrackMetadata(track, gen);

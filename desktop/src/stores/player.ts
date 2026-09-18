@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
+import { useAbLoopLibraryStore } from './ab-loops';
 import { createThrottledJsonStorage } from '../lib/tauri-storage';
 
 const PERSISTED_QUEUE_BEHIND = 30;
@@ -226,6 +227,8 @@ interface PlayerState {
   /** Drag a single loop bound (used by the markers on the progress bar). */
   nudgeAbBound: (which: 'a' | 'b', value: number) => void;
   clearAbLoop: () => void;
+  /** Restore a complete saved loop while loading its track. */
+  restoreAbLoop: (loop: AbLoop | null) => void;
   setCurrentTrackAccess: (access: Track['access']) => void;
   replaceTrackMetadata: (track: Track) => void;
   setPlaybackTransport: (quality: PlaybackQuality | null, source: PlaybackSource | null) => void;
@@ -480,37 +483,55 @@ export const usePlayerStore = create<PlayerState>()(
           repeat: s.repeat === 'off' ? 'all' : s.repeat === 'all' ? 'one' : 'off',
         })),
 
-      cycleAbPoint: (pos) =>
+      cycleAbPoint: (pos) => {
+        const track = get().currentTrack;
+        let next: AbLoop | null = null;
         set((s) => {
           const at = Math.max(0, pos);
           const ab = s.abLoop;
           // No loop yet → drop point A.
-          if (!ab) return { abLoop: { a: at, b: null } };
+          if (!ab) next = { a: at, b: null };
           // A set, awaiting B → place the second point, ordering the pair.
-          if (ab.b == null) {
-            if (at > ab.a + AB_MIN_GAP) return { abLoop: { a: ab.a, b: at } };
-            if (at < ab.a - AB_MIN_GAP) return { abLoop: { a: at, b: ab.a } };
-            return { abLoop: null }; // too close to A → cancel
+          else if (ab.b == null) {
+            if (at > ab.a + AB_MIN_GAP) next = { a: ab.a, b: at };
+            else if (at < ab.a - AB_MIN_GAP) next = { a: at, b: ab.a };
+            // too close to A → cancel
           }
           // Active loop → clear.
-          return { abLoop: null };
-        }),
+          return { abLoop: next };
+        });
+        if (!track) return;
+        if (next?.b != null) useAbLoopLibraryStore.getState().save(track, next);
+        else if (next == null) useAbLoopLibraryStore.getState().remove(track.urn);
+      },
 
-      nudgeAbBound: (which, value) =>
+      nudgeAbBound: (which, value) => {
+        const track = get().currentTrack;
+        let next: AbLoop | null = null;
         set((s) => {
           if (!s.abLoop) return {};
           const { a, b } = s.abLoop;
           if (which === 'a') {
             const na = Math.max(0, value);
             if (b != null && na > b - AB_MIN_GAP) return {};
-            return { abLoop: { a: na, b } };
+            next = { a: na, b };
+            return { abLoop: next };
           }
           const nb = Math.max(0, value);
           if (nb < a + AB_MIN_GAP) return {};
-          return { abLoop: { a, b: nb } };
-        }),
+          next = { a, b: nb };
+          return { abLoop: next };
+        });
+        if (track && next?.b != null) useAbLoopLibraryStore.getState().save(track, next);
+      },
 
-      clearAbLoop: () => set((s) => (s.abLoop ? { abLoop: null } : {})),
+      clearAbLoop: () => {
+        const track = get().currentTrack;
+        set((s) => (s.abLoop ? { abLoop: null } : {}));
+        if (track) useAbLoopLibraryStore.getState().remove(track.urn);
+      },
+
+      restoreAbLoop: (loop) => set({ abLoop: loop }),
 
       setCurrentTrackAccess: (access) =>
         set((s) => (s.currentTrack ? { currentTrack: { ...s.currentTrack, access } } : {})),

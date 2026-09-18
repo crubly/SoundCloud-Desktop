@@ -8,6 +8,7 @@ import { getArtistDisplay, getDisplayTitle } from './track-display';
 let connected = false;
 let lastConnectAttemptAt = 0;
 const CONNECT_RETRY_MS = 5000;
+const LOOPED_PART_SUFFIX = ' (looped part)';
 
 async function ensureConnected(): Promise<boolean> {
   if (!useSettingsStore.getState().discordRpcEnabled) {
@@ -51,7 +52,8 @@ async function updatePresence(track: Track, elapsedSecs: number) {
   const { discordRpcMode, discordRpcShowButton, discordRpcHidePaused } =
     useSettingsStore.getState();
   const display = getArtistDisplay(track);
-  const displayTitle = getDisplayTitle(track);
+  const loop = usePlayerStore.getState().abLoop;
+  const displayTitle = `${getDisplayTitle(track)}${loop?.b != null ? LOOPED_PART_SUFFIX : ''}`;
   const artist = display.primary || track.user.username;
 
   await enqueuePresence(async () => {
@@ -90,6 +92,7 @@ async function clearPresence() {
 
 let lastUrn: string | null = null;
 let lastPlaying = false;
+let lastLooped = false;
 let lastElapsed = 0;
 let lastFullSyncAt = 0;
 let seekSyncTimer: ReturnType<typeof setTimeout> | null = null;
@@ -110,6 +113,8 @@ usePlayerStore.subscribe((state) => {
 
   const trackChanged = currentTrack?.urn !== lastUrn;
   const playChanged = isPlaying !== lastPlaying;
+  const looped = state.abLoop?.b != null;
+  const loopChanged = looped !== lastLooped;
 
   if (!currentTrack) {
     if (lastPlaying || trackChanged) {
@@ -121,17 +126,19 @@ usePlayerStore.subscribe((state) => {
     }
     lastUrn = null;
     lastPlaying = false;
+    lastLooped = false;
     lastElapsed = 0;
     return;
   }
 
-  if (trackChanged || playChanged) {
+  if (trackChanged || playChanged || loopChanged) {
     if (seekSyncTimer) {
       clearTimeout(seekSyncTimer);
       seekSyncTimer = null;
     }
     lastUrn = currentTrack.urn;
     lastPlaying = isPlaying;
+    lastLooped = looped;
     // Важно: при смене трека elapsed ещё читает ПОЗИЦИЮ ПРЕДЫДУЩЕГО трека
     // (тикер сбрасывает кэш только внутри асинхронного loadTrack). Стартуем
     // presence с нуля — точную позицию донесут последующие тики по drift.
