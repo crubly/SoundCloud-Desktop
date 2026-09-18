@@ -484,44 +484,37 @@ export const usePlayerStore = create<PlayerState>()(
         })),
 
       cycleAbPoint: (pos) => {
-        const track = get().currentTrack;
-        let next: AbLoop | null = null;
-        set((s) => {
-          const at = Math.max(0, pos);
-          const ab = s.abLoop;
-          // No loop yet → drop point A.
-          if (!ab) next = { a: at, b: null };
-          // A set, awaiting B → place the second point, ordering the pair.
-          else if (ab.b == null) {
-            if (at > ab.a + AB_MIN_GAP) next = { a: ab.a, b: at };
-            else if (at < ab.a - AB_MIN_GAP) next = { a: at, b: ab.a };
-            // too close to A → cancel
-          }
-          // Active loop → clear.
-          return { abLoop: next };
-        });
+        const { currentTrack: track, abLoop: ab } = get();
+        const at = Math.max(0, pos);
+        let next: AbLoop | null;
+        // No loop yet → drop point A.
+        if (!ab) next = { a: at, b: null };
+        // A set, awaiting B → place the second point, ordering the pair.
+        else if (ab.b == null) {
+          if (at > ab.a + AB_MIN_GAP) next = { a: ab.a, b: at };
+          else if (at < ab.a - AB_MIN_GAP) next = { a: at, b: ab.a };
+          else next = null; // too close to A → cancel
+        } else next = null; // Active loop → clear.
+        set({ abLoop: next });
         if (!track) return;
         if (next?.b != null) useAbLoopLibraryStore.getState().save(track, next);
         else if (next == null) useAbLoopLibraryStore.getState().remove(track.urn);
       },
 
       nudgeAbBound: (which, value) => {
-        const track = get().currentTrack;
-        let next: AbLoop | null = null;
-        set((s) => {
-          if (!s.abLoop) return {};
-          const { a, b } = s.abLoop;
-          if (which === 'a') {
-            const na = Math.max(0, value);
-            if (b != null && na > b - AB_MIN_GAP) return {};
-            next = { a: na, b };
-            return { abLoop: next };
-          }
-          const nb = Math.max(0, value);
-          if (nb < a + AB_MIN_GAP) return {};
-          next = { a, b: nb };
-          return { abLoop: next };
-        });
+        const { currentTrack: track, abLoop: ab } = get();
+        if (!ab) return;
+        let next: AbLoop;
+        if (which === 'a') {
+          const a = Math.max(0, value);
+          if (ab.b != null && a > ab.b - AB_MIN_GAP) return;
+          next = { a, b: ab.b };
+        } else {
+          const b = Math.max(0, value);
+          if (b < ab.a + AB_MIN_GAP) return;
+          next = { a: ab.a, b };
+        }
+        set({ abLoop: next });
         if (track && next?.b != null) useAbLoopLibraryStore.getState().save(track, next);
       },
 

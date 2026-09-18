@@ -53,6 +53,9 @@ let ytStage: YouTubeStage | null = null;
 let loadGen = 0;
 let lastEndedUrn: string | null = null;
 const listeners = new Set<() => void>();
+// Unlike UI listeners, these must receive ticks while the window is hidden:
+// MediaSession and Discord use them to keep external state in sync.
+const playbackTimeListeners = new Set<() => void>();
 const API_PREVIEW_DURATION_MS = 30_000;
 
 // The 10Hz tick fan-out drives every UI subscriber (progress, waveform clip-path,
@@ -76,6 +79,16 @@ if (typeof document !== 'undefined') {
 export function subscribe(listener: () => void): () => void {
   listeners.add(listener);
   return () => listeners.delete(listener);
+}
+
+/** Subscribe to native playback ticks even while the app window is hidden. */
+export function subscribePlaybackTime(listener: () => void): () => void {
+  playbackTimeListeners.add(listener);
+  return () => playbackTimeListeners.delete(listener);
+}
+
+function notifyPlaybackTime(): void {
+  for (const listener of playbackTimeListeners) listener();
 }
 
 export function getCurrentTime(): number {
@@ -111,6 +124,7 @@ export function seek(seconds: number) {
   if (!hasTrack) return;
   invoke('audio_seek', { position: seconds }).catch(console.error);
   cachedTime = seconds;
+  notifyPlaybackTime();
   notify();
   setTimeout(() => updateMediaPosition(), 150);
 }
@@ -588,6 +602,7 @@ function handleTrackEnd() {
 listen<number>('audio:tick', (event) => {
   cachedTime = event.payload;
   if (cachedDuration <= 0) cachedDuration = fallbackDuration;
+  notifyPlaybackTime();
   notify();
 });
 

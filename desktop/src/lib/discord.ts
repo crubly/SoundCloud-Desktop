@@ -1,7 +1,7 @@
 import type { Track } from '../stores/player';
 import { usePlayerStore } from '../stores/player';
 import { useSettingsStore } from '../stores/settings';
-import { getCurrentTime, subscribe as subscribeAudioTime } from './audio';
+import { getCurrentTime, subscribePlaybackTime } from './audio';
 import { trackedInvoke as invoke } from './diagnostics';
 import { getArtistDisplay, getDisplayTitle } from './track-display';
 
@@ -176,7 +176,10 @@ useSettingsStore.subscribe((state, prev) => {
   }
 });
 
-subscribeAudioTime(() => {
+// This intentionally receives native ticks even while the window is hidden.
+// Discord's timestamp keeps running independently, so tying it to UI repaint
+// notifications causes a visible drift after background playback or an A-B loop.
+subscribePlaybackTime(() => {
   const { currentTrack, isPlaying } = usePlayerStore.getState();
   if (!currentTrack || !useSettingsStore.getState().discordRpcEnabled) return;
 
