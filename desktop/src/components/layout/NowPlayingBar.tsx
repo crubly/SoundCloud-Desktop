@@ -19,7 +19,6 @@ import { art, formatTime } from '../../lib/formatters';
 import {
   audioLines16,
   Cloud,
-  Heart,
   listMusic16,
   MessageSquareQuote,
   pauseCurrent20,
