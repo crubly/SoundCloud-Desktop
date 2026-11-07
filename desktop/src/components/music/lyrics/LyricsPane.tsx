@@ -79,7 +79,7 @@ export const LyricsPane = React.memo(({ track }: { track: Track }) => {
 
   const { data: lyrics, isLoading } = useQuery({
     queryKey: manualQuery
-      ? ['lyrics', 'search', manualQuery.artist, manualQuery.title, track.duration]
+      ? ['lyrics', 'search', track.urn, manualQuery.artist, manualQuery.title, track.duration]
       : ['lyrics', 'track', track.urn],
     queryFn: () =>
       manualQuery
@@ -130,7 +130,7 @@ export const LyricsPane = React.memo(({ track }: { track: Track }) => {
     return (
       <>
         <LyricsSourceBadge source={lyrics.source} onSearch={startSearch} />
-        <SyncedLyrics lines={lyrics.synced} />
+        <SyncedLyrics key={track.urn} lines={lyrics.synced} />
       </>
     );
   }

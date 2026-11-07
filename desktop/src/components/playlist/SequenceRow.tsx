@@ -2,129 +2,163 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { preloadTrack } from '../../lib/audio';
-import { art, dur, fc } from '../../lib/formatters';
+import { art, dur } from '../../lib/formatters';
 import {
   GripVertical,
-  headphones9,
-  heart9,
-  musicIcon12,
-  pauseWhite12,
-  playWhite12,
+  ListPlus,
+  MoreHorizontal,
+  Music,
+  pauseWhite14,
+  playWhite14,
   Trash2,
 } from '../../lib/icons';
+import { useArtistLinkItems, useDisplayTitle } from '../../lib/track-display';
 import { useTrackPlay } from '../../lib/useTrackPlay';
 import type { Track } from '../../stores/player';
+import { usePlayerStore } from '../../stores/player';
+import { AddToPlaylistDialog } from '../music/AddToPlaylistDialog';
+import { ArtistNameLinks } from '../music/ArtistNameLinks';
 import { LikeButton } from '../music/LikeButton';
 import { sameScdMeta, TrackStatusBadges } from '../music/TrackStatusBadges';
-import { TrackTitleArtist } from '../music/TrackTitleArtist';
-import { genreColor } from '../search/utils';
 
-/** Shared row body. The left hue-tick is colored by THIS track's genre, so the
- *  sequence visibly shifts color as you flip the crate. */
 function RowBody({
   track,
-  index,
   isThis,
   isThisPlaying,
   togglePlay,
+  dragHandle,
+  onRemove,
 }: {
   track: Track;
   index: number;
   isThis: boolean;
   isThisPlaying: boolean;
   togglePlay: () => void;
+  dragHandle?: React.ReactNode;
+  onRemove?: (urn: string) => void;
 }) {
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const addToQueueNext = usePlayerStore((s) => s.addToQueueNext);
+  const displayTitle = useDisplayTitle(track);
+  const artistLinks = useArtistLinkItems(track);
   const cover = art(track.artwork_url, 't200x200');
-  const hue = track.genre ? genreColor(track.genre) : null;
+  const albumLabel = track.genre ? `${displayTitle} - ${track.genre}` : `${displayTitle} - Single`;
 
   return (
     <>
-      {hue && (
-        <span
-          className="absolute left-0 top-2.5 bottom-2.5 w-[3px] rounded-full transition-opacity duration-300"
-          style={{
-            background: hue,
-            opacity: isThis ? 1 : 0.4,
-            boxShadow: isThis ? `0 0 10px ${hue}` : undefined,
-          }}
-        />
-      )}
-      <div
-        className="w-8 h-8 flex items-center justify-center shrink-0 cursor-pointer"
-        onClick={togglePlay}
-        onMouseEnter={() => preloadTrack(track.urn)}
-      >
-        {isThisPlaying ? (
-          <div className="w-7 h-7 rounded-full bg-accent text-accent-contrast flex items-center justify-center shadow-[0_0_12px_var(--color-accent-glow)]">
-            {pauseWhite12}
-          </div>
-        ) : (
-          <>
-            <span className="text-[12px] text-white/25 tabular-nums font-medium group-hover:hidden">
-              {index + 1}
-            </span>
-            <div className="hidden group-hover:flex w-7 h-7 rounded-full bg-white/10 items-center justify-center">
-              {playWhite12}
+      {/* 1. Left Star ★ gutter (or drag handle on hover for owner) */}
+      <div className="flex items-center justify-center gap-0.5">
+        {dragHandle}
+        <LikeButton track={track} />
+      </div>
+
+      {/* 2. Song column: 42×42 rounded-[8px] cover art + Title + badges */}
+      <div className="flex items-center gap-3.5 min-w-0 pr-2">
+        <div
+          onClick={togglePlay}
+          onMouseEnter={() => preloadTrack(track.urn)}
+          className="relative w-[42px] h-[42px] rounded-[8px] overflow-hidden shrink-0 bg-white/[0.05] ring-1 ring-white/[0.1] shadow-sm cursor-pointer"
+        >
+          {cover ? (
+            <img
+              src={cover}
+              alt=""
+              className="w-full h-full object-cover"
+              decoding="async"
+              loading="lazy"
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <Music size={15} className="text-white/25" />
             </div>
-          </>
-        )}
-      </div>
+          )}
 
-      <div className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 ring-1 ring-white/[0.06]">
-        {cover ? (
-          <img
-            src={cover}
-            alt=""
-            className="w-full h-full object-cover"
-            decoding="async"
-            loading="lazy"
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center bg-white/[0.03]">
-            {musicIcon12}
+          <div
+            className={`absolute inset-0 flex items-center justify-center bg-black/45 transition-opacity duration-150 ${
+              isThisPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+            }`}
+          >
+            {isThisPlaying ? pauseWhite14 : playWhite14}
           </div>
-        )}
-      </div>
+        </div>
 
-      <TrackTitleArtist track={track} highlight={isThis} size="sm" />
-
-      <div className="hidden sm:flex shrink-0">
-        <TrackStatusBadges meta={track._scd_meta} />
-      </div>
-
-      <div className="hidden sm:flex items-center gap-3 shrink-0">
-        {track.playback_count != null && (
-          <span className="text-[10px] text-white/20 tabular-nums flex items-center gap-0.5">
-            {headphones9}
-            {fc(track.playback_count)}
+        <div className="min-w-0 flex items-center gap-2">
+          <span
+            onClick={() => navigate(`/track/${encodeURIComponent(track.urn)}`)}
+            className={`text-[13.5px] font-medium truncate cursor-pointer transition-colors ${
+              isThis ? 'text-accent font-semibold' : 'text-white/92 hover:text-white'
+            }`}
+          >
+            {displayTitle}
           </span>
-        )}
-        {(track.favoritings_count ?? track.likes_count) != null && (
-          <span className="text-[10px] text-white/20 tabular-nums flex items-center gap-0.5">
-            {heart9}
-            {fc(track.favoritings_count ?? track.likes_count)}
-          </span>
-        )}
+          <TrackStatusBadges meta={track._scd_meta} />
+        </div>
       </div>
 
-      <LikeButton track={track} />
+      {/* 3. Artist column */}
+      <div className="min-w-0 pl-3 text-[13px] text-white/60 truncate">
+        <ArtistNameLinks
+          items={artistLinks}
+          linkClassName="hover:text-white hover:underline transition-colors"
+        />
+      </div>
 
-      <span className="text-[11px] text-white/25 tabular-nums font-medium shrink-0 w-10 text-right">
-        {dur(track.duration)}
-      </span>
+      {/* 4. Album / Single column */}
+      <div className="min-w-0 pl-3 text-[13px] text-white/55 truncate">{albumLabel}</div>
+
+      {/* 5. Time + ••• Actions column */}
+      <div className="flex items-center justify-end gap-1.5 pl-3">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            addToQueueNext([track]);
+          }}
+          className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.08] transition-all cursor-pointer shrink-0"
+          title={t('player.addToQueue')}
+        >
+          <ListPlus size={14} />
+        </button>
+
+        {onRemove && (
+          <button
+            type="button"
+            onClick={() => onRemove(track.urn)}
+            className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-white/35 hover:text-red-400 hover:bg-red-400/10 transition-all cursor-pointer shrink-0"
+            title={t('playlist.removeTrack')}
+          >
+            <Trash2 size={13} />
+          </button>
+        )}
+
+        <span className="text-[13px] text-white/50 tabular-nums font-normal shrink-0">
+          {dur(track.duration)}
+        </span>
+
+        <AddToPlaylistDialog trackUrns={[track.urn]}>
+          <button
+            type="button"
+            className="w-6 h-6 rounded-md flex items-center justify-center text-white/45 hover:text-white hover:bg-white/[0.08] transition-all cursor-pointer shrink-0"
+            title={t('playlist.addToPlaylist')}
+          >
+            <MoreHorizontal size={15} />
+          </button>
+        </AddToPlaylistDialog>
+      </div>
+
+      {/* Inset hairline bottom border starting after artwork (Reference Image 3) */}
+      <div className="pointer-events-none absolute bottom-0 left-[86px] right-2 h-px bg-white/[0.06]" />
     </>
   );
 }
 
-const ROW_BASE =
-  'group relative flex items-center gap-3.5 pl-4 pr-4 py-3 rounded-xl transition-colors duration-200 ease-[var(--ease-apple)] select-none';
+const ROW_GRID =
+  'group liquid-table-row grid grid-cols-[24px_minmax(180px,2fr)_minmax(120px,1.3fr)_minmax(120px,1.2fr)_96px] items-center gap-3 px-2 py-2 select-none';
 
-function activeCls(isThis: boolean) {
-  return isThis ? 'bg-accent/[0.06] ring-1 ring-accent/20' : 'hover:bg-white/[0.03]';
-}
-
-/** Owner row — drag-to-reorder with a "pulled sleeve" tilt; remove on hover. */
+/** Owner row — drag-to-reorder + remove on hover. */
 export const SortableSequenceRow = React.memo(
   function SortableSequenceRow({
     track,
@@ -139,51 +173,43 @@ export const SortableSequenceRow = React.memo(
     onRemove: (urn: string) => void;
     onPlay?: () => void;
   }) {
-    const { t } = useTranslation();
     const { isThis, isThisPlaying, togglePlay } = useTrackPlay(track, queue, onPlay);
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
       id: track.urn,
     });
     const base = CSS.Transform.toString(transform);
 
+    const dragHandle = (
+      <div
+        className="hidden group-hover:flex w-4 items-center justify-center shrink-0 cursor-grab active:cursor-grabbing text-white/30 hover:text-white/70 transition-colors"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical size={13} />
+      </div>
+    );
+
     return (
       <div
         ref={setNodeRef}
+        data-active={isThis ? 'true' : undefined}
+        onDoubleClick={togglePlay}
         style={{
           transform: base,
           transition,
-          // Source row is hidden while dragging — the DragOverlay renders the
-          // floating copy, so the drag survives this row windowing out of the
-          // virtual list. (No content-visibility: the VirtualList already windows;
-          // stacking it caused the scroll jank.)
           opacity: isDragging ? 0 : 1,
         }}
-        className={`${ROW_BASE} ${activeCls(isThis)}`}
+        className={ROW_GRID}
       >
-        <div
-          className="w-5 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing text-white/15 hover:text-white/40 transition-colors -ml-1"
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical size={14} />
-        </div>
-
         <RowBody
           track={track}
           index={index}
           isThis={isThis}
           isThisPlaying={isThisPlaying}
           togglePlay={togglePlay}
+          dragHandle={dragHandle}
+          onRemove={onRemove}
         />
-
-        <button
-          type="button"
-          onClick={() => onRemove(track.urn)}
-          className="opacity-0 group-hover:opacity-100 w-7 h-7 rounded-lg flex items-center justify-center text-white/20 hover:text-red-400 hover:bg-red-400/10 transition-all duration-200 shrink-0"
-          title={t('playlist.removeTrack')}
-        >
-          <Trash2 size={13} />
-        </button>
       </div>
     );
   },
@@ -196,8 +222,6 @@ export const SortableSequenceRow = React.memo(
     sameScdMeta(prev.track._scd_meta, next.track._scd_meta),
 );
 
-/** Floating copy rendered by DragOverlay while reordering — stays mounted even if
- *  the source row windows out of the virtual list, so long auto-scroll drags work. */
 export function SequenceRowOverlay({
   track,
   index,
@@ -210,15 +234,13 @@ export function SequenceRowOverlay({
   const { isThis, isThisPlaying, togglePlay } = useTrackPlay(track, queue);
   return (
     <div
-      className={`${ROW_BASE} ${activeCls(isThis)} bg-white/[0.06] cursor-grabbing`}
+      data-active={isThis ? 'true' : undefined}
+      className={`${ROW_GRID} bg-white/[0.08] cursor-grabbing`}
       style={{
-        transform: 'rotate(1.5deg)',
-        boxShadow: '0 24px 60px rgba(0,0,0,0.55), inset 0 0 0 0.5px rgba(255,255,255,0.12)',
+        transform: 'rotate(1deg)',
+        boxShadow: '0 24px 60px rgba(0,0,0,0.65), inset 0 1px 0 rgba(255,255,255,0.16)',
       }}
     >
-      <div className="w-5 flex items-center justify-center shrink-0 text-white/40 -ml-1">
-        <GripVertical size={14} />
-      </div>
       <RowBody
         track={track}
         index={index}
@@ -245,7 +267,11 @@ export const SequenceRow = React.memo(
   }) {
     const { isThis, isThisPlaying, togglePlay } = useTrackPlay(track, queue, onPlay);
     return (
-      <div className={`${ROW_BASE} ${activeCls(isThis)}`}>
+      <div
+        data-active={isThis ? 'true' : undefined}
+        onDoubleClick={togglePlay}
+        className={ROW_GRID}
+      >
         <RowBody
           track={track}
           index={index}

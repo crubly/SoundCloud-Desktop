@@ -1,28 +1,27 @@
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { useNavigate } from 'react-router-dom';
 import { preloadTrack } from '../../lib/audio';
-import { art, dur, fc } from '../../lib/formatters';
+import { art, dur } from '../../lib/formatters';
 import {
-  headphones11,
-  heart11,
-  ListMusic,
   ListPlus,
+  MoreHorizontal,
   Music,
   pauseWhite14,
   playWhite14,
 } from '../../lib/icons';
+import { useArtistLinkItems, useDisplayTitle } from '../../lib/track-display';
 import { useTrackPlay } from '../../lib/useTrackPlay';
 import type { Track } from '../../stores/player';
 import { usePlayerStore } from '../../stores/player';
 import { AddToPlaylistDialog } from '../music/AddToPlaylistDialog';
+import { ArtistNameLinks } from '../music/ArtistNameLinks';
 import { LikeButton } from '../music/LikeButton';
 import { sameScdMeta, TrackStatusBadges } from '../music/TrackStatusBadges';
-import { TrackTitleArtist } from '../music/TrackTitleArtist';
 
 export const LibraryTrackRow = React.memo(
   function LibraryTrackRow({
     track,
-    index,
     queue,
     onPlay,
   }: {
@@ -32,8 +31,11 @@ export const LibraryTrackRow = React.memo(
     onPlay?: () => void;
   }) {
     const { t } = useTranslation();
+    const navigate = useNavigate();
     const { isThis, isThisPlaying, togglePlay } = useTrackPlay(track, queue, onPlay);
     const addToQueueNext = usePlayerStore((s) => s.addToQueueNext);
+    const displayTitle = useDisplayTitle(track);
+    const artistLinks = useArtistLinkItems(track);
 
     const handleAddToQueue = (e: React.MouseEvent) => {
       e.stopPropagation();
@@ -41,94 +43,95 @@ export const LibraryTrackRow = React.memo(
     };
 
     const cover = art(track.artwork_url, 't200x200');
+    const albumLabel = track.genre ? `${displayTitle} - ${track.genre}` : `${displayTitle} - Single`;
 
     return (
       <div
-        className={`group flex items-center gap-4 px-4 py-3 rounded-2xl transition-all duration-300 ease-[var(--ease-apple)] ${
-          isThis
-            ? 'bg-accent/[0.06] ring-1 ring-accent/20 shadow-[inset_0_0_20px_rgba(255,85,0,0.05)]'
-            : 'hover:bg-white/[0.04]'
-        }`}
+        data-active={isThis ? 'true' : undefined}
+        onDoubleClick={togglePlay}
+        onMouseEnter={() => preloadTrack(track.urn)}
+        className="group liquid-table-row grid grid-cols-[24px_minmax(180px,2fr)_minmax(120px,1.3fr)_minmax(120px,1.2fr)_88px] items-center gap-3 px-2 py-2 select-none"
       >
-        <div
-          className="w-8 h-8 flex items-center justify-center shrink-0 cursor-pointer"
-          onClick={togglePlay}
-          onMouseEnter={() => preloadTrack(track.urn)}
-        >
-          {isThisPlaying ? (
-            <div className="w-8 h-8 rounded-full bg-accent text-accent-contrast flex items-center justify-center shadow-[0_0_15px_var(--color-accent-glow)] scale-100 animate-fade-in-up">
-              {pauseWhite14}
-            </div>
-          ) : (
-            <>
-              <span className="text-[13px] text-white/20 tabular-nums font-medium group-hover:hidden">
-                {index + 1}
-              </span>
-              <div className="hidden group-hover:flex w-8 h-8 rounded-full bg-white/10 items-center justify-center hover:bg-white/20 hover:scale-105 transition-all">
-                {playWhite14}
+        {/* 1. Left Star ★ gutter (Reference Image 3) */}
+        <div className="flex items-center justify-center">
+          <LikeButton track={track} />
+        </div>
+
+        {/* 2. Song column: 42×42 rounded-[8px] artwork + Title + Explicit/HQ badge */}
+        <div className="flex items-center gap-3.5 min-w-0 pr-2">
+          <div
+            onClick={togglePlay}
+            className="relative w-[42px] h-[42px] rounded-[8px] overflow-hidden shrink-0 bg-white/[0.05] ring-1 ring-white/[0.1] shadow-sm cursor-pointer"
+          >
+            {cover ? (
+              <img src={cover} alt="" className="w-full h-full object-cover" decoding="async" />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center">
+                <Music size={15} className="text-white/25" />
               </div>
-            </>
-          )}
-        </div>
+            )}
 
-        <div className="relative w-11 h-11 rounded-xl overflow-hidden shrink-0 ring-1 ring-white/[0.08] shadow-md">
-          {cover ? (
-            <img src={cover} alt="" className="w-full h-full object-cover" decoding="async" />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-white/[0.05] to-transparent">
-              <Music size={14} className="text-white/20" />
+            <div
+              className={`absolute inset-0 flex items-center justify-center bg-black/45 transition-opacity duration-150 ${
+                isThisPlaying ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'
+              }`}
+            >
+              {isThisPlaying ? pauseWhite14 : playWhite14}
             </div>
-          )}
+          </div>
+
+          <div className="min-w-0 flex items-center gap-2">
+            <span
+              onClick={() => navigate(`/track/${encodeURIComponent(track.urn)}`)}
+              className={`text-[13.5px] font-medium truncate cursor-pointer transition-colors ${
+                isThis ? 'text-accent font-semibold' : 'text-white/92 hover:text-white'
+              }`}
+            >
+              {displayTitle}
+            </span>
+            <TrackStatusBadges meta={track._scd_meta} />
+          </div>
         </div>
 
-        <TrackTitleArtist
-          track={track}
-          highlight={isThis}
-          size="md"
-          className="flex flex-col justify-center"
-        />
-
-        <div className="hidden md:flex shrink-0">
-          <TrackStatusBadges meta={track._scd_meta} />
+        {/* 3. Artist column */}
+        <div className="min-w-0 pl-3 text-[13px] text-white/60 truncate">
+          <ArtistNameLinks
+            items={artistLinks}
+            linkClassName="hover:text-white hover:underline transition-colors"
+          />
         </div>
 
-        <LikeButton track={track} />
+        {/* 4. Album / Single column */}
+        <div className="min-w-0 pl-3 text-[13px] text-white/55 truncate">{albumLabel}</div>
 
-        <AddToPlaylistDialog trackUrns={[track.urn]}>
+        {/* 5. Time + ••• Actions column */}
+        <div className="flex items-center justify-end gap-1.5 pl-3">
           <button
             type="button"
-            className="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0"
-            title={t('playlist.addToPlaylist')}
+            onClick={handleAddToQueue}
+            className="opacity-0 group-hover:opacity-100 w-6 h-6 rounded-md flex items-center justify-center text-white/40 hover:text-white hover:bg-white/[0.08] transition-all cursor-pointer shrink-0"
+            title={t('player.addToQueue')}
           >
-            <ListMusic size={16} />
+            <ListPlus size={14} />
           </button>
-        </AddToPlaylistDialog>
 
-        <button
-          type="button"
-          onClick={handleAddToQueue}
-          className="opacity-0 group-hover:opacity-100 w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/80 hover:bg-white/[0.08] transition-all duration-200 shrink-0"
-          title={t('player.addToQueue')}
-        >
-          <ListPlus size={16} />
-        </button>
-
-        <div className="hidden sm:flex items-center gap-4 shrink-0 pr-4">
-          {track.playback_count != null && (
-            <span className="text-[11px] text-white/30 tabular-nums flex items-center gap-1.5 w-16">
-              {headphones11}
-              {fc(track.playback_count)}
-            </span>
-          )}
-          <span className="text-[11px] text-white/30 tabular-nums flex items-center gap-1.5 w-14">
-            {heart11}
-            {fc(track.favoritings_count ?? track.likes_count)}
+          <span className="text-[13px] text-white/50 tabular-nums font-normal shrink-0">
+            {dur(track.duration)}
           </span>
+
+          <AddToPlaylistDialog trackUrns={[track.urn]}>
+            <button
+              type="button"
+              className="w-6 h-6 rounded-md flex items-center justify-center text-white/45 hover:text-white hover:bg-white/[0.08] transition-all cursor-pointer shrink-0"
+              title={t('playlist.addToPlaylist')}
+            >
+              <MoreHorizontal size={15} />
+            </button>
+          </AddToPlaylistDialog>
         </div>
 
-        <span className="text-[12px] text-white/30 tabular-nums font-medium shrink-0 w-12 text-right">
-          {dur(track.duration)}
-        </span>
+        {/* Inset hairline bottom border starting after artwork (Reference Image 3) */}
+        <div className="pointer-events-none absolute bottom-0 left-[86px] right-2 h-px bg-white/[0.06]" />
       </div>
     );
   },

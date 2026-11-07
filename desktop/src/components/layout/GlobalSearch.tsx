@@ -3,15 +3,12 @@ import { useTranslation } from 'react-i18next';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Clock, Search as SearchIcon, X } from '../../lib/icons';
 import { usePerfMode } from '../../lib/perf';
-import { isMac } from '../../lib/platform';
 import { useSearchHistoryStore } from '../../stores/searchHistory';
 import { useSearchQueryStore } from '../../stores/searchQuery';
 import { isSoundCloudUrl, isYouTubeUrl } from '../search/utils';
 
-/* The one global search field — lives in the titlebar, present on every page.
- * Writes the shared query store and routes to /search; the Search page reads
- * that store, so there's a single search input app-wide. Glass lens, accent glow
- * on focus, ⌘K hint, recent-search dropdown. */
+/* Compact floating Liquid Glass search pill in the top-right corner (Apple Music Tahoe style).
+ * Expands smoothly when focused and opens recent search history in a Liquid Glass popover. */
 export const GlobalSearch = memo(function GlobalSearch() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -23,7 +20,6 @@ export const GlobalSearch = memo(function GlobalSearch() {
   const clearHistory = useSearchHistoryStore((s) => s.clearHistory);
 
   const perf = usePerfMode();
-  const fieldBlur = perf.blur(24);
   const dropBlur = perf.blur(32);
 
   const [focused, setFocused] = useState(false);
@@ -51,34 +47,28 @@ export const GlobalSearch = memo(function GlobalSearch() {
   };
 
   return (
-    <div className="relative w-full max-w-[600px]" style={{ isolation: 'isolate' }}>
+    <div
+      className={`relative transition-[width] duration-300 ease-[var(--ease-apple)] ${
+        focused || q ? 'w-[280px] sm:w-[320px]' : 'w-[196px] sm:w-[220px]'
+      }`}
+      style={{ isolation: 'isolate' }}
+    >
       <div
-        className="relative flex items-center gap-2.5 h-11 pl-4 pr-2 rounded-full overflow-hidden"
-        style={{
-          background:
-            fieldBlur > 0
-              ? 'linear-gradient(165deg, rgba(255,255,255,0.07) 0%, rgba(255,255,255,0.025) 60%, rgba(255,255,255,0.045) 100%)'
-              : 'rgba(28,28,34,0.9)',
-          border: `0.5px solid ${focused ? 'var(--color-accent)' : 'rgba(255,255,255,0.12)'}`,
-          backdropFilter: fieldBlur > 0 ? `blur(${fieldBlur}px) saturate(160%)` : undefined,
-          WebkitBackdropFilter: fieldBlur > 0 ? `blur(${fieldBlur}px) saturate(160%)` : undefined,
-          boxShadow: focused
-            ? '0 10px 34px rgba(0,0,0,0.4), 0 0 22px var(--color-accent-glow), inset 0 1px 0 rgba(255,255,255,0.1)'
-            : '0 6px 20px rgba(0,0,0,0.28), inset 0 1px 0 rgba(255,255,255,0.07)',
-          transition: 'border-color 300ms ease, box-shadow 400ms ease',
-        }}
+        className="liquid-pill relative flex items-center gap-2 h-8 pl-3 pr-2 rounded-full overflow-hidden"
+        style={
+          focused
+            ? {
+                borderColor: 'rgba(255,255,255,0.28)',
+                boxShadow:
+                  'inset 0 1px 0.5px rgba(255,255,255,0.34), 0 12px 32px rgba(0,0,0,0.7), 0 0 18px var(--color-accent-glow)',
+              }
+            : undefined
+        }
       >
-        {/* specular sheen */}
-        <div
-          className="absolute inset-x-6 top-0 h-px pointer-events-none"
-          style={{
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent)',
-          }}
-        />
         <SearchIcon
-          size={17}
-          className="shrink-0 transition-colors duration-300"
-          style={{ color: focused ? 'var(--color-accent)' : 'rgba(255,255,255,0.45)' }}
+          size={14}
+          className="shrink-0 transition-colors duration-200"
+          style={{ color: focused ? 'var(--color-accent)' : 'rgba(255,255,255,0.5)' }}
         />
         <input
           id="global-search-input"
@@ -101,44 +91,39 @@ export const GlobalSearch = memo(function GlobalSearch() {
           }}
           placeholder={t('search.globalPlaceholder')}
           spellCheck={false}
-          className="flex-1 min-w-0 bg-transparent outline-none text-[14px] text-white/90 placeholder:text-white/35 select-text"
+          className="flex-1 min-w-0 bg-transparent outline-none text-[12.5px] font-medium text-white/92 placeholder:text-white/42 select-text"
         />
         {isUrl && (
-          <span className="shrink-0 text-[10px] uppercase tracking-wide text-accent/90 px-2 py-0.5 rounded-full bg-accent/10 border border-accent/20">
+          <span className="shrink-0 text-[9px] uppercase tracking-wide text-accent px-1.5 py-0.5 rounded-full bg-accent/15 border border-accent/25">
             {t('search.urlHint')}
           </span>
         )}
-        {q ? (
+        {q && (
           <button
             type="button"
             onClick={() => setQ('')}
-            className="shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-white/40 hover:text-white/80 hover:bg-white/5 transition-colors cursor-pointer"
+            className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-white/45 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
             aria-label={t('search.clear')}
           >
-            <X size={15} />
+            <X size={12} />
           </button>
-        ) : (
-          !focused && (
-            <kbd className="shrink-0 hidden sm:flex items-center gap-0.5 h-6 px-2 mr-1 rounded-md text-[10px] font-semibold tracking-wide text-white/30 bg-white/[0.05] border border-white/10">
-              {isMac() ? '⌘' : 'Ctrl'} K
-            </kbd>
-          )
         )}
       </div>
 
       {showHistory && (
         <div
-          className="absolute left-0 right-0 mt-2 p-1.5 rounded-2xl overflow-hidden"
+          className="absolute right-0 w-[280px] mt-2 p-1.5 rounded-2xl overflow-hidden z-50"
           style={{
-            background: dropBlur > 0 ? 'rgba(16,16,20,0.78)' : 'rgba(16,16,20,0.96)',
-            border: '0.5px solid rgba(255,255,255,0.1)',
-            backdropFilter: dropBlur > 0 ? `blur(${dropBlur}px) saturate(150%)` : undefined,
-            WebkitBackdropFilter: dropBlur > 0 ? `blur(${dropBlur}px) saturate(150%)` : undefined,
-            boxShadow: '0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06)',
+            background: dropBlur > 0 ? 'rgba(18,18,22,0.84)' : 'rgba(18,18,22,0.96)',
+            border: '1px solid rgba(255,255,255,0.14)',
+            backdropFilter: dropBlur > 0 ? `blur(${dropBlur}px) saturate(190%)` : undefined,
+            WebkitBackdropFilter: dropBlur > 0 ? `blur(${dropBlur}px) saturate(190%)` : undefined,
+            boxShadow:
+              '0 24px 60px rgba(0,0,0,0.75), inset 0 1px 0.5px rgba(255,255,255,0.22)',
           }}
         >
           <div className="flex items-center justify-between px-2.5 py-1.5">
-            <span className="text-[11px] uppercase tracking-wide text-white/30">
+            <span className="text-[10.5px] font-semibold uppercase tracking-wider text-white/35">
               {t('search.history')}
             </span>
             <button
@@ -147,7 +132,7 @@ export const GlobalSearch = memo(function GlobalSearch() {
                 e.preventDefault();
                 clearHistory();
               }}
-              className="text-[11px] text-white/35 hover:text-white/70 transition-colors cursor-pointer"
+              className="text-[11px] text-white/40 hover:text-white/80 transition-colors cursor-pointer"
             >
               {t('search.clearHistory')}
             </button>
@@ -155,14 +140,14 @@ export const GlobalSearch = memo(function GlobalSearch() {
           {history.slice(0, 8).map((item) => (
             <div
               key={item}
-              className="group/h flex items-center gap-2.5 px-2.5 py-2 rounded-xl hover:bg-white/[0.06] transition-colors cursor-pointer"
+              className="group/h flex items-center gap-2.5 px-2.5 py-1.5 rounded-xl hover:bg-white/[0.08] transition-colors cursor-pointer"
               onMouseDown={(e) => {
                 e.preventDefault();
                 pick(item);
               }}
             >
-              <Clock size={13} className="shrink-0 text-white/25" />
-              <span className="flex-1 min-w-0 truncate text-[13px] text-white/70">{item}</span>
+              <Clock size={12} className="shrink-0 text-white/30" />
+              <span className="flex-1 min-w-0 truncate text-[12.5px] text-white/80">{item}</span>
               <button
                 type="button"
                 onMouseDown={(e) => {
@@ -170,10 +155,10 @@ export const GlobalSearch = memo(function GlobalSearch() {
                   e.stopPropagation();
                   removeQuery(item);
                 }}
-                className="shrink-0 w-6 h-6 flex items-center justify-center rounded-full text-white/0 group-hover/h:text-white/40 hover:!text-white/80 transition-colors"
+                className="shrink-0 w-5 h-5 flex items-center justify-center rounded-full text-white/0 group-hover/h:text-white/45 hover:!text-white transition-colors"
                 aria-label={t('search.clear')}
               >
-                <X size={13} />
+                <X size={12} />
               </button>
             </div>
           ))}

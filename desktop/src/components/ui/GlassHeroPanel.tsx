@@ -17,18 +17,18 @@ function GlassHeroPanelImpl({ hasStar, aura, className, children }: GlassHeroPan
   const filter = b > 0 ? `blur(${b}px) saturate(160%)` : undefined;
   return (
     <div
-      className={`relative rounded-[2.5rem] ${className ?? ''}`}
+      className={`relative rounded-[24px] ${className ?? ''}`}
       style={{
         background:
           b > 0
-            ? 'linear-gradient(165deg, rgba(255,255,255,0.06) 0%, rgba(255,255,255,0.02) 50%, rgba(255,255,255,0.04) 100%)'
-            : 'rgba(20,20,24,0.82)',
+            ? 'linear-gradient(180deg, rgba(255,255,255,0.065) 0%, rgba(255,255,255,0.02) 48%, rgba(255,255,255,0.035) 100%), rgba(12,12,15,0.68)'
+            : 'rgba(14,14,18,0.92)',
         backdropFilter: filter,
         WebkitBackdropFilter: filter,
         boxShadow: hasStar
-          ? `0 30px 80px rgba(0,0,0,0.4), 0 0 80px ${auraRgba(aura, 0.18)}, inset 0 0 0 1px ${auraRgba(aura, 0.3)}, inset 0 1px 0 rgba(255,255,255,0.1)`
-          : '0 30px 80px rgba(0,0,0,0.35), inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.08)',
-        animation: 'hub-rise 700ms cubic-bezier(0.2,0.8,0.2,1) both',
+          ? `0 24px 64px rgba(0,0,0,0.75), inset 0 1px 0.5px rgba(255,255,255,0.22), inset 0 0 0 1px ${auraRgba(aura, 0.25)}`
+          : '0 24px 64px rgba(0,0,0,0.72), inset 0 1px 0.5px rgba(255,255,255,0.18), inset 0 0 0 1px rgba(255,255,255,0.09)',
+        animation: 'hub-rise 600ms cubic-bezier(0.2,0.8,0.2,1) both',
         isolation: 'isolate',
       }}
     >

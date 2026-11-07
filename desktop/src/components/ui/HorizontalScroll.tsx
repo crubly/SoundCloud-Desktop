@@ -4,7 +4,9 @@ import {
   useCallback,
   useEffect,
   useRef,
+  useState,
 } from 'react';
+import { ChevronLeft, ChevronRight } from '../../lib/icons';
 import { useWheelHorizontalScroll } from '../../lib/useWheelHorizontalScroll';
 
 interface HorizontalScrollProps {
@@ -17,12 +19,25 @@ const DRAG_THRESHOLD = 6;
 export function HorizontalScroll({ children, className = '' }: HorizontalScrollProps) {
   const ref = useRef<HTMLDivElement>(null);
   const wheelRef = useWheelHorizontalScroll();
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(false);
+
+  const updateScrollButtons = useCallback(() => {
+    const el = ref.current;
+    if (!el) return;
+    setCanLeft(el.scrollLeft > 8);
+    setCanRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 8);
+  }, []);
+
   const setRef = useCallback(
     (node: HTMLDivElement | null) => {
       ref.current = node;
       wheelRef(node);
+      if (node) {
+        requestAnimationFrame(updateScrollButtons);
+      }
     },
-    [wheelRef],
+    [wheelRef, updateScrollButtons],
   );
   const dragStateRef = useRef({
     active: false,
@@ -33,10 +48,24 @@ export function HorizontalScroll({ children, className = '' }: HorizontalScrollP
   });
 
   useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    updateScrollButtons();
+    const ro = new ResizeObserver(updateScrollButtons);
+    ro.observe(el);
+    el.addEventListener('scroll', updateScrollButtons, { passive: true });
     return () => {
+      ro.disconnect();
+      el.removeEventListener('scroll', updateScrollButtons);
       document.body.style.removeProperty('user-select');
     };
-  }, []);
+  }, [updateScrollButtons]);
+
+  const scrollByStep = (dir: -1 | 1) => {
+    const el = ref.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(260, el.clientWidth * 0.72), behavior: 'smooth' });
+  };
 
   const handlePointerDown = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (e.pointerType === 'mouse' && e.button !== 0) return;
@@ -84,25 +113,49 @@ export function HorizontalScroll({ children, className = '' }: HorizontalScrollP
   };
 
   return (
-    <div
-      ref={setRef}
-      onPointerDown={handlePointerDown}
-      onPointerMove={handlePointerMove}
-      onPointerUp={(e) => stopDragging(e.pointerId)}
-      onPointerCancel={(e) => stopDragging(e.pointerId)}
-      onClickCapture={(e) => {
-        if (dragStateRef.current.dragging) {
-          e.preventDefault();
-          e.stopPropagation();
-        }
-      }}
-      className={`flex gap-4 overflow-x-hidden pb-2 scrollbar-hide cursor-grab active:cursor-grabbing ${className}`}
-      style={{
-        contain: 'layout paint style',
-        touchAction: 'pan-y',
-      }}
-    >
-      {children}
+    <div className="relative group/hscroll">
+      <div
+        ref={setRef}
+        onPointerDown={handlePointerDown}
+        onPointerMove={handlePointerMove}
+        onPointerUp={(e) => stopDragging(e.pointerId)}
+        onPointerCancel={(e) => stopDragging(e.pointerId)}
+        onClickCapture={(e) => {
+          if (dragStateRef.current.dragging) {
+            e.preventDefault();
+            e.stopPropagation();
+          }
+        }}
+        className={`flex gap-4 overflow-x-hidden pb-2 scrollbar-hide cursor-grab active:cursor-grabbing ${className}`}
+        style={{
+          contain: 'layout paint style',
+          touchAction: 'pan-y',
+        }}
+      >
+        {children}
+      </div>
+
+      {canLeft && (
+        <button
+          type="button"
+          onClick={() => scrollByStep(-1)}
+          aria-label="Scroll left"
+          className="liquid-pill absolute left-2 top-1/2 -translate-y-1/2 z-20 w-8 h-14 rounded-full flex items-center justify-center text-white/85 hover:text-white opacity-0 group-hover/hscroll:opacity-100 transition-opacity duration-200 cursor-pointer"
+        >
+          <ChevronLeft size={18} strokeWidth={2.2} />
+        </button>
+      )}
+
+      {canRight && (
+        <button
+          type="button"
+          onClick={() => scrollByStep(1)}
+          aria-label="Scroll right"
+          className="liquid-pill absolute right-2 top-1/2 -translate-y-1/2 z-20 w-8 h-14 rounded-full flex items-center justify-center text-white/90 hover:text-white opacity-90 group-hover/hscroll:opacity-100 transition-opacity duration-200 cursor-pointer"
+        >
+          <ChevronRight size={18} strokeWidth={2.2} />
+        </button>
+      )}
     </div>
   );
 }

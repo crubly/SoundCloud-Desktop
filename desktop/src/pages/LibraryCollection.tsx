@@ -24,7 +24,7 @@ export const LibraryCollection = React.memo(() => {
   return (
     <LibraryFrame sound={sound}>
       <LibrarySubHeader
-        title={t('library.likedTracks')}
+        title={t('sidebar.favouriteSongs')}
         aura={sound.aura}
         count={likedTracks.length}
         filter={filter}

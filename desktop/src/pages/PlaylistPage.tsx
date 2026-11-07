@@ -1,18 +1,15 @@
 import type { DragEndEvent } from '@dnd-kit/core';
 import * as Dialog from '@radix-ui/react-dialog';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useNavigate, useParams } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useShallow } from 'zustand/shallow';
-import { CrateLedger } from '../components/playlist/CrateLedger';
 import { PLAYLIST_KEYFRAMES } from '../components/playlist/keyframes';
 import { MoreCrates } from '../components/playlist/MoreCrates';
 import { PlaylistHero } from '../components/playlist/PlaylistHero';
 import { SequenceList } from '../components/playlist/SequenceList';
-import { SetRibbon } from '../components/playlist/SetRibbon';
 import { usePlaylistAura } from '../components/playlist/usePlaylistAura';
-import { Atmosphere } from '../components/search/Atmosphere';
 import {
   useDeletePlaylist,
   useInfiniteScroll,
@@ -20,8 +17,7 @@ import {
   usePlaylistTracks,
   useUpdatePlaylistTracks,
 } from '../lib/hooks';
-import { AlertCircle, ChevronLeft, X } from '../lib/icons';
-import { usePerfMode } from '../lib/perf';
+import { AlertCircle, Search as SearchIcon, X } from '../lib/icons';
 import { rawPlaylistCover } from '../lib/playlist-cover';
 import { armPlaylistContinuation } from '../lib/queue-continuation';
 import { useAuthStore } from '../stores/auth';
@@ -30,14 +26,17 @@ import { useSettingsStore } from '../stores/settings';
 
 function HeroSkeleton() {
   return (
-    <div className="relative rounded-[2.5rem] overflow-hidden glass-featured p-6 md:p-10">
-      <div className="flex flex-col lg:flex-row gap-10">
-        <div className="w-[150px] h-[150px] md:w-[200px] md:h-[200px] rounded-[1.7rem] skeleton-shimmer shrink-0 self-center lg:self-start" />
-        <div className="flex-1 space-y-4 w-full">
-          <div className="h-4 w-32 rounded-full skeleton-shimmer" />
-          <div className="h-14 w-2/3 rounded-2xl skeleton-shimmer" />
-          <div className="h-11 w-72 rounded-full skeleton-shimmer mt-6" />
-          <div className="h-24 w-full rounded-2xl skeleton-shimmer mt-4" />
+    <div className="flex flex-col sm:flex-row gap-8 py-4">
+      <div className="w-[228px] h-[228px] rounded-[18px] skeleton-shimmer shrink-0" />
+      <div className="flex-1 flex flex-col justify-between py-2 space-y-4">
+        <div className="space-y-3 my-auto">
+          <div className="h-9 w-2/3 rounded-xl skeleton-shimmer" />
+          <div className="h-4 w-40 rounded-lg skeleton-shimmer" />
+        </div>
+        <div className="flex gap-3">
+          <div className="w-10 h-10 rounded-full skeleton-shimmer" />
+          <div className="w-28 h-10 rounded-full skeleton-shimmer" />
+          <div className="w-10 h-10 rounded-full skeleton-shimmer" />
         </div>
       </div>
     </div>
@@ -48,7 +47,6 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
   const { urn } = useParams<{ urn: string }>();
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const perf = usePerfMode();
   const myUrn = useAuthStore((s) => s.user?.urn);
 
   const { data: playlist, isLoading: playlistLoading } = usePlaylist(urn);
@@ -62,6 +60,8 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
   const updateTracks = useUpdatePlaylistTracks(urn);
   const deletePlaylist = useDeletePlaylist();
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [filter, setFilter] = useState('');
+  const deferredFilter = useDeferredValue(filter);
 
   const { pinnedPlaylists, pinPlaylist, unpinPlaylist } = useSettingsStore(
     useShallow((s) => ({
@@ -80,7 +80,6 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
     return playlistTracks.length > 0 ? playlistTracks : (playlist.tracks ?? []);
   }, [isLoading, playlist, playlistTracks]);
 
-  // Local order for DnD; skip server sync while a debounced save is in flight.
   const [localTracks, setLocalTracks] = useState<Track[]>([]);
   const pendingMutationRef = useRef(false);
   useEffect(() => {
@@ -114,6 +113,16 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
   useEffect(() => () => clearTimeout(debounceTimerRef.current), []);
 
   const tracks = isOwner ? localTracks : serverTracks;
+  const filteredTracks = useMemo(() => {
+    if (!deferredFilter.trim()) return tracks;
+    const q = deferredFilter.toLowerCase();
+    return tracks.filter(
+      (tr) =>
+        tr.title.toLowerCase().includes(q) ||
+        tr.user?.username?.toLowerCase().includes(q) ||
+        tr.genre?.toLowerCase().includes(q),
+    );
+  }, [tracks, deferredFilter]);
 
   const trackUrnSet = useMemo(() => new Set(tracks.map((tr) => tr.urn)), [tracks]);
   const { isPausedFromThis, isPlayingFromThis } = usePlayerStore(
@@ -153,8 +162,6 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
     [localTracks, debouncedUpdate, t],
   );
 
-  // Доигрываем плейлист ДО КОНЦА (пагинированный срез в очереди → потом волна),
-  // как у лайков. Армить ПОСЛЕ play(): он сбрасывает прошлый источник.
   const armContinuation = useCallback(() => {
     if (urn) armPlaylistContinuation(urn);
   }, [urn]);
@@ -177,15 +184,6 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
     st.play(tracks[Math.floor(Math.random() * tracks.length)], tracks);
     armContinuation();
   }, [tracks, armContinuation]);
-
-  const handleJump = useCallback(
-    (index: number) => {
-      if (index < 0 || index >= tracks.length) return;
-      usePlayerStore.getState().play(tracks[index], tracks);
-      armContinuation();
-    },
-    [tracks, armContinuation],
-  );
 
   const handleTogglePin = useCallback(() => {
     if (!playlist) return;
@@ -216,7 +214,6 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
     return (
       <div className="relative min-h-full w-full">
         <style>{PLAYLIST_KEYFRAMES}</style>
-        {perf.atmosphere && <Atmosphere />}
         <div
           className="relative z-10 max-w-[1320px] mx-auto px-4 md:px-8 pt-5 pb-10"
           style={{ isolation: 'isolate' }}
@@ -232,25 +229,33 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
   return (
     <div className="relative min-h-full w-full">
       <style>{PLAYLIST_KEYFRAMES}</style>
-      {perf.atmosphere && (
-        <Atmosphere
-          tint={aura.tint}
-          energy={isPlayingFromThis ? Math.min(1, aura.energy + 0.12) : aura.energy}
-        />
-      )}
 
       <div
-        className="relative z-10 max-w-[1320px] mx-auto px-4 md:px-8 pt-5 pb-10 space-y-7"
+        className="relative z-10 max-w-[1320px] mx-auto px-4 md:px-8 pt-4 pb-10 space-y-6"
         style={{ isolation: 'isolate' }}
       >
-        <button
-          type="button"
-          onClick={() => navigate(-1)}
-          className="inline-flex items-center justify-center w-9 h-9 rounded-full text-white/55 hover:text-white hover:bg-white/[0.06] transition-all duration-200 cursor-pointer"
-          aria-label={t('search.back')}
-        >
-          <ChevronLeft size={18} />
-        </button>
+        {/* Top-Right Inline Filter Pill ("Find in Playlist" — Reference Image 3) */}
+        <div className="flex justify-end">
+          <div className="liquid-pill relative flex items-center gap-2 h-8 w-[220px] focus-within:w-[270px] pl-3 pr-2 rounded-full transition-[width] duration-200">
+            <SearchIcon size={13} className="text-white/45 shrink-0" />
+            <input
+              type="text"
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              placeholder={t('playlist.findInPlaylist')}
+              className="flex-1 min-w-0 bg-transparent text-white/90 placeholder:text-white/40 text-[12.5px] outline-none select-text"
+            />
+            {filter && (
+              <button
+                type="button"
+                onClick={() => setFilter('')}
+                className="w-4 h-4 flex items-center justify-center rounded-full text-white/40 hover:text-white cursor-pointer"
+              >
+                <X size={12} />
+              </button>
+            )}
+          </div>
+        </div>
 
         <PlaylistHero
           playlist={playlist}
@@ -266,26 +271,9 @@ export const PlaylistPage = React.memo(function PlaylistPage() {
           onDelete={() => setShowDeleteConfirm(true)}
         />
 
-        <CrateLedger playlist={playlist} tracks={tracks} accentGlow={aura.accentGlow} />
-
-        {tracks.length > 1 && (
-          <div
-            className="rounded-[2rem] p-5 md:p-6"
-            style={{
-              background: 'rgba(255,255,255,0.025)',
-              border: '0.5px solid rgba(255,255,255,0.06)',
-            }}
-          >
-            <div className="flex items-center gap-2 mb-4 text-[11px] font-bold uppercase tracking-[0.22em] text-white/45">
-              {t('playlist.theSet')}
-            </div>
-            <SetRibbon tracks={tracks} onJump={handleJump} />
-          </div>
-        )}
-
         <SequenceList
-          tracks={tracks}
-          isOwner={isOwner}
+          tracks={filteredTracks}
+          isOwner={isOwner && !deferredFilter}
           onDragEnd={handleDragEnd}
           onRemove={handleRemoveTrack}
           onPlay={armContinuation}

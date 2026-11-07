@@ -6,12 +6,12 @@ import { fc } from '../../lib/formatters';
 import type { Playlist } from '../../lib/hooks';
 import {
   Check,
-  Heart,
   LinkIcon,
-  MapPin,
   pauseCurrent16,
+  Pin,
   playCurrent16,
   Shuffle,
+  Star,
   Trash2,
 } from '../../lib/icons';
 import { SharingToggle } from '../music/SharingToggle';
@@ -63,14 +63,12 @@ const PlaylistLikeBtn = React.memo(function PlaylistLikeBtn({
       type="button"
       onClick={toggle}
       title={t('track.likes')}
-      className={`inline-flex items-center gap-1.5 px-3.5 h-11 rounded-2xl text-[12.5px] font-semibold tabular-nums transition-all duration-300 ease-[var(--ease-apple)] cursor-pointer border active:scale-[0.96] ${
-        liked
-          ? 'bg-accent/15 text-accent border-accent/30 shadow-[0_0_18px_var(--color-accent-glow)]'
-          : 'bg-white/[0.04] border-white/[0.07] text-white/65 hover:bg-white/[0.07] hover:text-white/90 hover:border-white/[0.12]'
+      className={`liquid-action-btn h-10 px-3.5 rounded-full text-[12.5px] tabular-nums ${
+        liked ? 'text-accent' : '!text-white/70 hover:!text-white'
       }`}
     >
-      <Heart size={15} fill={liked ? 'currentColor' : 'none'} />
-      <span>{fc(localCount)}</span>
+      <Star size={14} fill={liked ? 'currentColor' : 'none'} />
+      {localCount > 0 && <span>{fc(localCount)}</span>}
     </button>
   );
 });
@@ -98,18 +96,17 @@ const CopyIconAction = React.memo(function CopyIconAction({ url }: { url?: strin
       onClick={copy}
       title={copied ? t('auth.copied') : t('auth.copyLink')}
       aria-label={copied ? t('auth.copied') : t('auth.copyLink')}
-      className={`inline-flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ease-[var(--ease-apple)] cursor-pointer ${
-        copied
-          ? 'text-emerald-400 bg-emerald-500/12'
-          : 'text-white/60 hover:text-white/95 hover:bg-white/[0.07]'
+      className={`liquid-action-btn w-10 h-10 rounded-full ${
+        copied ? '!text-emerald-400' : '!text-white/70 hover:!text-white'
       }`}
     >
-      {copied ? <Check size={16} /> : <LinkIcon size={16} />}
+      {copied ? <Check size={15} /> : <LinkIcon size={15} />}
     </button>
   );
 });
 
-/** The crate's full control bar — Play the Set, Shuffle, Pin, Like + utility rail. */
+/** Apple Music Tahoe Playlist Action Row (Reference Image 3):
+ *  Circular Shuffle button, Pill ▶ Play button, Circular Pin button + Like/Copy/Delete. */
 export const PlaylistActions = React.memo(function PlaylistActions({
   playlist,
   isOwner,
@@ -132,76 +129,57 @@ export const PlaylistActions = React.memo(function PlaylistActions({
   const { t } = useTranslation();
 
   return (
-    <div className="flex items-center gap-3 flex-wrap justify-center lg:justify-start">
-      <button
-        type="button"
-        onClick={onPlayAll}
-        className={`group relative overflow-hidden inline-flex items-center gap-2.5 pl-4 pr-6 h-11 rounded-full text-[14px] font-semibold transition-all duration-500 ease-[var(--ease-apple)] cursor-pointer hover:scale-[1.03] active:scale-[0.97] ${
-          isPlaying ? 'bg-white text-black' : 'bg-accent text-accent-contrast'
-        }`}
-        style={{
-          boxShadow: '0 12px 32px var(--color-accent-glow), inset 0 1px 0 rgba(255,255,255,0.3)',
-        }}
-      >
-        <span
-          className="absolute inset-0 -translate-x-full group-hover:translate-x-full transition-transform duration-700 ease-[var(--ease-apple)] pointer-events-none"
-          style={{
-            background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.28), transparent)',
-          }}
-        />
-        {isPlaying ? pauseCurrent16 : playCurrent16}
-        {t('playlist.playAll')}
-      </button>
-
+    <div className="flex items-center gap-3.5 flex-wrap">
+      {/* 1. Circular Shuffle Button */}
       <button
         type="button"
         onClick={onShuffle}
         title={t('playlist.shuffle')}
-        className="inline-flex items-center gap-1.5 px-3.5 h-11 rounded-2xl text-[12.5px] font-semibold border bg-white/[0.04] border-white/[0.07] text-white/65 hover:bg-white/[0.07] hover:text-white/90 hover:border-white/[0.12] transition-all duration-300 ease-[var(--ease-apple)] cursor-pointer active:scale-[0.96]"
+        className="liquid-action-btn w-10 h-10 rounded-full"
       >
-        <Shuffle size={14} />
-        <span className="hidden sm:inline">{t('playlist.shuffle')}</span>
+        <Shuffle size={16} strokeWidth={2.2} />
+      </button>
+
+      {/* 2. Pill Play / Pause Button */}
+      <button
+        type="button"
+        onClick={onPlayAll}
+        className="liquid-action-btn h-10 px-9 rounded-full text-[14px] font-semibold"
+      >
+        {isPlaying ? pauseCurrent16 : playCurrent16}
+        <span>{isPlaying ? t('track.pause') : t('track.play')}</span>
+      </button>
+
+      {/* 3. Circular Pin Button */}
+      <button
+        type="button"
+        onClick={onTogglePin}
+        title={isPinned ? t('sidebar.unpinPlaylist') : t('sidebar.pinPlaylist')}
+        aria-label={isPinned ? t('sidebar.unpinPlaylist') : t('sidebar.pinPlaylist')}
+        className={`liquid-action-btn w-10 h-10 rounded-full ${
+          isPinned ? 'ring-1 ring-accent/40' : ''
+        }`}
+      >
+        <Pin size={16} strokeWidth={2.2} fill={isPinned ? 'currentColor' : 'none'} />
       </button>
 
       <PlaylistLikeBtn playlistUrn={playlist.urn} count={playlist.likes_count} />
+      <CopyIconAction url={playlist.permalink_url} />
 
-      <div
-        className="flex items-center gap-0.5 h-11 px-1.5 rounded-2xl"
-        style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '0.5px solid rgba(255,255,255,0.07)',
-        }}
-      >
-        <button
-          type="button"
-          onClick={onTogglePin}
-          title={isPinned ? t('sidebar.unpinPlaylist') : t('sidebar.pinPlaylist')}
-          aria-label={isPinned ? t('sidebar.unpinPlaylist') : t('sidebar.pinPlaylist')}
-          className={`inline-flex items-center justify-center w-10 h-10 rounded-xl transition-all duration-200 ease-[var(--ease-apple)] cursor-pointer ${
-            isPinned
-              ? 'text-accent bg-accent/15'
-              : 'text-white/60 hover:text-white/95 hover:bg-white/[0.07]'
-          }`}
-        >
-          <MapPin size={16} />
-        </button>
-        <CopyIconAction url={playlist.permalink_url} />
-        {isOwner && (
-          <>
-            <span className="w-px h-5 bg-white/[0.08] mx-0.5" aria-hidden />
-            <SharingToggle kind="playlist" urn={playlist.urn} sharing={playlist.sharing} />
-            <button
-              type="button"
-              onClick={onDelete}
-              title={t('playlist.delete')}
-              aria-label={t('playlist.delete')}
-              className="inline-flex items-center justify-center w-10 h-10 rounded-xl text-white/55 hover:text-red-400 hover:bg-red-500/10 transition-all duration-200 cursor-pointer"
-            >
-              <Trash2 size={16} />
-            </button>
-          </>
-        )}
-      </div>
+      {isOwner && (
+        <div className="flex items-center gap-2">
+          <SharingToggle kind="playlist" urn={playlist.urn} sharing={playlist.sharing} />
+          <button
+            type="button"
+            onClick={onDelete}
+            title={t('playlist.delete')}
+            aria-label={t('playlist.delete')}
+            className="liquid-action-btn w-10 h-10 rounded-full !text-white/60 hover:!text-red-400"
+          >
+            <Trash2 size={15} />
+          </button>
+        </div>
+      )}
     </div>
   );
 });

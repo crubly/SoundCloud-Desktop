@@ -883,8 +883,12 @@ let lastLyricsUrn: string | null = null;
 async function pushAlwaysLyrics(track: Track | null) {
   const s = useSettingsStore.getState();
   if (!s.touchBar || !s.touchBarLyricsAlways || !track || track.urn === lastLyricsUrn) return;
-  lastLyricsUrn = track.urn;
+  const urn = track.urn;
+  lastLyricsUrn = urn;
   const lyrics = await getLyricsForTrack(track);
+  // A queued track can change while its lyrics are still being fetched. Never
+  // let that late response overwrite the native timeline for the new track.
+  if (usePlayerStore.getState().currentTrack?.urn !== urn || lastLyricsUrn !== urn) return;
   if (lyrics?.synced?.length) {
     invoke('audio_set_lyrics_timeline', { lines: toTimelineLines(lyrics.synced) }).catch(
       console.error,

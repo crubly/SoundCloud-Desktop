@@ -1,6 +1,6 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useNavigate } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { AlbumsCatalog } from '../components/discover/AlbumsCatalog';
 import { ArtistsCatalog } from '../components/discover/ArtistsCatalog';
 import { DiscoverHero } from '../components/discover/DiscoverHero';
@@ -23,8 +23,16 @@ const SEARCH_DEBOUNCE_MS = 220;
 export const Discover = memo(function Discover() {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [tab, setTab] = useState<DiscoverTabId>('albums');
+  const location = useLocation();
+  const [tab, setTab] = useState<DiscoverTabId>(() =>
+    location.search.includes('tab=artists') ? 'artists' : 'albums',
+  );
   const [query, setQuery] = useState('');
+
+  useEffect(() => {
+    if (location.search.includes('tab=artists')) setTab('artists');
+    else if (location.search.includes('tab=albums')) setTab('albums');
+  }, [location.search]);
   const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
   const [isSurprising, setIsSurprising] = useState(false);
   const perf = usePerfMode();

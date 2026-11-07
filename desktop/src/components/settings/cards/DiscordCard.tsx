@@ -17,6 +17,10 @@ export function DiscordCard() {
   const setMode = useSettingsStore((s) => s.setDiscordRpcMode);
   const showButton = useSettingsStore((s) => s.discordRpcShowButton);
   const setShowButton = useSettingsStore((s) => s.setDiscordRpcShowButton);
+  const buttonText = useSettingsStore((s) => s.discordRpcButtonText);
+  const setButtonText = useSettingsStore((s) => s.setDiscordRpcButtonText);
+  const youtubeButtonText = useSettingsStore((s) => s.discordRpcYouTubeButtonText);
+  const setYouTubeButtonText = useSettingsStore((s) => s.setDiscordRpcYouTubeButtonText);
   const hidePaused = useSettingsStore((s) => s.discordRpcHidePaused);
   const setHidePaused = useSettingsStore((s) => s.setDiscordRpcHidePaused);
 
@@ -43,6 +47,39 @@ export function DiscordCard() {
           <Row title={t('settings.discordRpcButton')} desc={t('settings.discordRpcButtonDesc')}>
             <Toggle checked={showButton} onChange={() => setShowButton(!showButton)} />
           </Row>
+          {showButton && (
+            <div className="space-y-4">
+              <label className="block space-y-1.5">
+                <span className="text-[12.5px] text-white/50 font-medium">
+                  {t('settings.discordRpcButtonText')}
+                </span>
+                <input
+                  type="text"
+                  value={buttonText}
+                  maxLength={32}
+                  onChange={(event) => setButtonText(event.target.value)}
+                  placeholder={t('settings.discordRpcButtonTextPlaceholder')}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-[13px] text-white outline-none transition-colors placeholder:text-white/25 focus:border-[var(--color-accent)]"
+                />
+              </label>
+              <label className="block space-y-1.5">
+                <span className="text-[12.5px] text-white/50 font-medium">
+                  {t('settings.discordRpcYouTubeButtonText')}
+                </span>
+                <input
+                  type="text"
+                  value={youtubeButtonText}
+                  maxLength={32}
+                  onChange={(event) => setYouTubeButtonText(event.target.value)}
+                  placeholder={t('settings.discordRpcYouTubeButtonTextPlaceholder')}
+                  className="w-full rounded-xl border border-white/10 bg-black/20 px-3 py-2.5 text-[13px] text-white outline-none transition-colors placeholder:text-white/25 focus:border-[var(--color-accent)]"
+                />
+              </label>
+              <p className="text-[11.5px] text-white/35">
+                {t('settings.discordRpcButtonTextDesc')}
+              </p>
+            </div>
+          )}
           <Row
             title={t('settings.discordRpcHidePaused')}
             desc={t('settings.discordRpcHidePausedDesc')}

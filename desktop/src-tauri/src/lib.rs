@@ -2,6 +2,7 @@ mod app;
 mod audio;
 mod auth;
 mod discord;
+mod macos_glass;
 mod network;
 mod rt;
 mod scapi;
@@ -156,6 +157,7 @@ pub fn run() {
             audio::start_default_output_monitor(app.handle());
             audio::start_fft_thread(app.handle().clone(), analyser_buffer);
             touchbar::start_touchbar(app.handle());
+            macos_glass::setup_window_glass(app.handle());
 
             app.manage(app::popover::TrayState::default());
             app::tray::setup_tray(app).expect("failed to setup tray");

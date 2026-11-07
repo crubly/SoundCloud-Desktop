@@ -1,11 +1,12 @@
 import * as Dialog from '@radix-ui/react-dialog';
 import React, { lazy, Suspense, useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Outlet } from 'react-router-dom';
+import { NavLink, Outlet } from 'react-router-dom';
 import { useShallow } from 'zustand/shallow';
 import { getCurrentTime, getDuration, handlePrev, seek } from '../../lib/audio';
 import { getWallpaperUrl } from '../../lib/cache';
 import { art } from '../../lib/formatters';
+import { Compass, Home, Library, Search, Settings } from '../../lib/icons';
 import { usePerfMode } from '../../lib/perf';
 import { isMac } from '../../lib/platform';
 import { toggleWindowFullscreen } from '../../lib/window';
@@ -276,7 +277,7 @@ export const AppShell = React.memo(() => {
   const onQueueToggle = useCallback(() => setQueueOpen((v) => !v), []);
   const onQueueClose = useCallback(() => setQueueOpen(false), []);
   const mainRef = useRef<HTMLElement>(null);
-  const sidebarWidth = sidebarCollapsed ? 56 : 196;
+  const sidebarWidth = sidebarCollapsed ? 64 : 228;
 
   // Mirror panel state into refs so the global keydown listener binds once.
   const queueOpenRef = useRef(queueOpen);
@@ -441,19 +442,101 @@ export const AppShell = React.memo(() => {
   return (
     <div
       id="app-shell-root"
-      className="flex flex-col h-screen relative overflow-hidden"
+      className="flex h-screen relative overflow-hidden"
       style={{ ['--npb-left' as string]: `${sidebarWidth}px` }}
     >
+      {/* Hidden SVG Refraction Filter for Windows/Linux/iOS Liquid Glass specular edge lensing */}
+      <svg width="0" height="0" className="absolute pointer-events-none" aria-hidden="true">
+        <defs>
+          <filter id="liquid-refraction" x="-10%" y="-10%" width="120%" height="120%">
+            <feTurbulence
+              type="fractalNoise"
+              baseFrequency="0.015"
+              numOctaves="2"
+              result="noise"
+            />
+            <feDisplacementMap
+              in="SourceGraphic"
+              in2="noise"
+              scale="3"
+              xChannelSelector="R"
+              yChannelSelector="G"
+            />
+          </filter>
+        </defs>
+      </svg>
+
       <CustomBackground />
       <AmbientGlow />
-      <Titlebar />
-      <div className="flex flex-1 min-h-0 relative z-10" style={{ isolation: 'isolate' }}>
+
+      <div className="flex flex-1 min-w-0 min-h-0 relative z-10" style={{ isolation: 'isolate' }}>
         <Sidebar />
-        {/* pb clears the floating now-playing dock, which overlays (doesn't push) content */}
-        <main ref={mainRef} className="flex-1 overflow-y-auto overflow-x-hidden pb-[136px]">
-          <StableOutlet />
-        </main>
+        <div className="flex-1 flex flex-col min-w-0 min-h-0 relative main-canvas">
+          <Titlebar onOpenKeybindings={() => setKbOpen(true)} />
+          {/* pb clears the floating now-playing dock, which overlays (doesn't push) content */}
+          <main
+            ref={mainRef}
+            className="flex-1 overflow-y-auto overflow-x-hidden pt-14 pb-[124px]"
+          >
+            <StableOutlet />
+          </main>
+        </div>
       </div>
+
+      {/* Floating iOS 26 Liquid Glass Tab Dock on compact/mobile viewports (< 768px) */}
+      <nav className="md:hidden fixed bottom-[88px] left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 px-2 py-1.5 rounded-full liquid-ios-dock">
+        <NavLink
+          to="/home"
+          className={({ isActive }) =>
+            `flex items-center justify-center w-11 h-9 rounded-full transition-all ${
+              isActive ? 'bg-white/15 text-accent' : 'text-white/60 hover:text-white'
+            }`
+          }
+        >
+          <Home size={18} />
+        </NavLink>
+        <NavLink
+          to="/discover"
+          className={({ isActive }) =>
+            `flex items-center justify-center w-11 h-9 rounded-full transition-all ${
+              isActive ? 'bg-white/15 text-accent' : 'text-white/60 hover:text-white'
+            }`
+          }
+        >
+          <Compass size={18} />
+        </NavLink>
+        <NavLink
+          to="/library"
+          className={({ isActive }) =>
+            `flex items-center justify-center w-11 h-9 rounded-full transition-all ${
+              isActive ? 'bg-white/15 text-accent' : 'text-white/60 hover:text-white'
+            }`
+          }
+        >
+          <Library size={18} />
+        </NavLink>
+        <NavLink
+          to="/search"
+          className={({ isActive }) =>
+            `flex items-center justify-center w-11 h-9 rounded-full transition-all ${
+              isActive ? 'bg-white/15 text-accent' : 'text-white/60 hover:text-white'
+            }`
+          }
+        >
+          <Search size={18} />
+        </NavLink>
+        <NavLink
+          to="/settings"
+          className={({ isActive }) =>
+            `flex items-center justify-center w-11 h-9 rounded-full transition-all ${
+              isActive ? 'bg-white/15 text-accent' : 'text-white/60 hover:text-white'
+            }`
+          }
+        >
+          <Settings size={18} />
+        </NavLink>
+      </nav>
+
       <NowPlayingBar onQueueToggle={onQueueToggle} queueOpen={queueOpen} />
       {queueOpen && (
         <Suspense fallback={null}>

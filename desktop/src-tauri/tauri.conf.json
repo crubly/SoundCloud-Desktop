@@ -14,13 +14,16 @@
     "windows": [
       {
         "title": "SoundCloud",
-        "width": 1200,
-        "height": 800,
+        "width": 1240,
+        "height": 820,
         "minWidth": 800,
         "minHeight": 470,
-        "decorations": false,
+        "decorations": true,
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
+        "transparent": true,
         "theme": "Dark",
-        "backgroundColor": "#08080a"
+        "backgroundColor": "#000000"
       }
     ],
     "security": {

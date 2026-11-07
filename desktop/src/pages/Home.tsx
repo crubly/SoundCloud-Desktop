@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { HomePlaylists } from '../components/home/HomePlaylists';
 import { ArchiveStation } from '../components/home/river/ArchiveStation';
 import { RIVER_KEYFRAMES } from '../components/home/river/keyframes';
@@ -10,13 +11,11 @@ import { SoundWaveLockOverlay } from '../components/music/soundwave';
 import { useLikedTracks } from '../lib/hooks';
 import { useAuthStore } from '../stores/auth';
 
-/** Главная — «Течение»: река твоей музыки. Устье (играющее + waveform-вода),
- *  русло «Волны» и притоки вдоль нити течения; внизу — затоны (архив). */
 export function Home() {
+  const { t } = useTranslation();
   const user = useAuthStore((s) => s.user);
   const likedTracksQuery = useLikedTracks(100);
 
-  // Выбранный жанр спектра ретинтит всю страницу (атмосфера + шапка).
   const [genre, setGenre] = useState<string | null>(null);
   const sound = useSoundprint(likedTracksQuery.tracks, genre);
 
@@ -28,13 +27,23 @@ export function Home() {
   return (
     <WaveFrame sound={sound}>
       <style>{RIVER_KEYFRAMES}</style>
-      {user && <RiverMasthead user={user} sound={sound} selected={genre} onSelect={setGenre} />}
 
-      <HomePlaylists />
+      {/* Apple Music Tahoe Page Title */}
+      <header className="pt-1">
+        <h1 className="text-[34px] font-bold tracking-tight text-white leading-none">
+          {t('nav.home')}
+        </h1>
+      </header>
 
-      <div className="relative">
-        <RiverFlow tint={sound.tint} />
-        <SoundWaveLockOverlay />
+      <HomePlaylists likedTracks={likedShelfTracks} />
+
+      <div id="wave" className="pt-4 space-y-6">
+        {user && <RiverMasthead user={user} sound={sound} selected={genre} onSelect={setGenre} />}
+
+        <div className="relative">
+          <RiverFlow tint={sound.tint} />
+          <SoundWaveLockOverlay />
+        </div>
       </div>
 
       <ArchiveStation likedTracks={likedShelfTracks} likedLoading={likedTracksQuery.isLoading} />

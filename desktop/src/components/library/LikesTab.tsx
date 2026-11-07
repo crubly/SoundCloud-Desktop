@@ -5,7 +5,7 @@ import { useLocalFavorites } from '../../stores/favorites';
 import { VirtualList } from '../ui/VirtualList';
 import { LibraryTrackRow } from './LibraryTrackRow';
 
-/** Locally-liked tracks (persisted favorites) — no server, no pagination. */
+/** Locally-liked tracks (persisted favorites) rendered in an Apple Music Tahoe table. */
 export const LikesTab = React.memo(function LikesTab({ filter }: { filter: string }) {
   const { t } = useTranslation();
   const likedTracks = useLocalFavorites();
@@ -26,21 +26,30 @@ export const LikesTab = React.memo(function LikesTab({ filter }: { filter: strin
 
   if (likedTracks.length === 0) {
     return (
-      <div className="min-h-[400px]">
-        <div className="py-20 text-center text-white/20">{t('library.noLikedTracks')}</div>
+      <div className="min-h-[320px]">
+        <div className="py-20 text-center text-white/30">{t('library.noLikedTracks')}</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-[400px]">
-      <div className="flex flex-col gap-1">
+    <div className="min-h-[360px]">
+      {/* Apple Music Tahoe Column Header (Reference Image 3) */}
+      <div className="liquid-table-header grid-cols-[24px_minmax(180px,2fr)_minmax(120px,1.3fr)_minmax(120px,1.2fr)_88px] gap-3 !px-2 mb-1">
+        <div />
+        <div className="pl-0">{t('table.song')}</div>
+        <div className="liquid-table-header-col">{t('table.artist')}</div>
+        <div className="liquid-table-header-col">{t('table.album')}</div>
+        <div className="liquid-table-header-col">{t('table.time')}</div>
+      </div>
+
+      <div className="flex flex-col">
         {filtered.length > 0 ? (
           <VirtualList
             items={filtered}
-            rowHeight={68}
+            rowHeight={58}
             overscan={8}
-            className="flex flex-col gap-1"
+            className="flex flex-col"
             disabled={filtered.length < 40}
             getItemKey={(track) => track.urn}
             renderItem={(track, i) => (
@@ -48,7 +57,7 @@ export const LikesTab = React.memo(function LikesTab({ filter }: { filter: strin
             )}
           />
         ) : (
-          <div className="py-20 text-center text-white/20">{t('library.noMatches')}</div>
+          <div className="py-16 text-center text-white/30">{t('library.noMatches')}</div>
         )}
       </div>
     </div>

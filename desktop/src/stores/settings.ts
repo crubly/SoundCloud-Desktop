@@ -59,9 +59,15 @@ export interface ThemePresetDef {
 export const THEME_PRESETS: Record<Exclude<ThemePreset, 'custom'>, ThemePresetDef> = {
   soundcloud: {
     accent: '#ff5500',
-    bg: '#08080a',
+    bg: '#000000',
     name: 'SoundCloud',
-    preview: ['#ff5500', '#08080a', '#1a1a1e'],
+    preview: ['#ff5500', '#000000', '#121214'],
+  },
+  crimson: {
+    accent: '#fa2d48',
+    bg: '#000000',
+    name: 'Apple Liquid',
+    preview: ['#fa2d48', '#000000', '#141416'],
   },
   dark: {
     accent: '#ffffff',
@@ -71,21 +77,15 @@ export const THEME_PRESETS: Record<Exclude<ThemePreset, 'custom'>, ThemePresetDe
   },
   neon: {
     accent: '#bf5af2',
-    bg: '#08060f',
+    bg: '#000000',
     name: 'Неон',
-    preview: ['#bf5af2', '#08060f', '#18102a'],
+    preview: ['#bf5af2', '#000000', '#14101c'],
   },
   forest: {
     accent: '#22c55e',
-    bg: '#050e08',
+    bg: '#000000',
     name: 'Лес',
-    preview: ['#22c55e', '#050e08', '#0a1f10'],
-  },
-  crimson: {
-    accent: '#ff2d55',
-    bg: '#0c0507',
-    name: 'Кармин',
-    preview: ['#ff2d55', '#0c0507', '#1e0a10'],
+    preview: ['#22c55e', '#000000', '#0c1610'],
   },
 };
 
@@ -114,6 +114,8 @@ export interface SettingsState {
   discordRpcEnabled: boolean;
   discordRpcMode: DiscordRpcMode;
   discordRpcShowButton: boolean;
+  discordRpcButtonText: string;
+  discordRpcYouTubeButtonText: string;
   discordRpcHidePaused: boolean;
   soundwaveLanguages: string[];
   soundwaveMode: 'similar' | 'diverse';
@@ -156,6 +158,8 @@ export interface SettingsState {
   setDiscordRpcEnabled: (enabled: boolean) => void;
   setDiscordRpcMode: (mode: DiscordRpcMode) => void;
   setDiscordRpcShowButton: (show: boolean) => void;
+  setDiscordRpcButtonText: (text: string) => void;
+  setDiscordRpcYouTubeButtonText: (text: string) => void;
   setDiscordRpcHidePaused: (hide: boolean) => void;
   setSoundwaveLanguages: (langs: string[]) => void;
   setSoundwaveMode: (mode: 'similar' | 'diverse') => void;
@@ -179,7 +183,7 @@ const DEFAULT_EQ_GAINS = [0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
 
 const DEFAULTS = {
   accentColor: '#ff5500',
-  bgPrimary: '#08080a',
+  bgPrimary: '#000000',
   themePreset: 'soundcloud' as ThemePreset,
   perfMode: 'medium' as PerfMode,
   backgroundImage: '',
@@ -202,6 +206,8 @@ const DEFAULTS = {
   discordRpcEnabled: true,
   discordRpcMode: 'track' as DiscordRpcMode,
   discordRpcShowButton: true,
+  discordRpcButtonText: '',
+  discordRpcYouTubeButtonText: 'Listen on YouTube',
   discordRpcHidePaused: true,
   soundwaveLanguages: [] as string[],
   soundwaveMode: 'similar' as 'similar' | 'diverse',
@@ -280,6 +286,9 @@ export const useSettingsStore = create<SettingsState>()(
       setDiscordRpcEnabled: (discordRpcEnabled) => set({ discordRpcEnabled }),
       setDiscordRpcMode: (discordRpcMode) => set({ discordRpcMode }),
       setDiscordRpcShowButton: (discordRpcShowButton) => set({ discordRpcShowButton }),
+      setDiscordRpcButtonText: (discordRpcButtonText) => set({ discordRpcButtonText }),
+      setDiscordRpcYouTubeButtonText: (discordRpcYouTubeButtonText) =>
+        set({ discordRpcYouTubeButtonText }),
       setDiscordRpcHidePaused: (discordRpcHidePaused) => set({ discordRpcHidePaused }),
       setSoundwaveLanguages: (soundwaveLanguages) => set({ soundwaveLanguages }),
       setSoundwaveMode: (soundwaveMode) => set({ soundwaveMode }),
@@ -312,7 +321,7 @@ export const useSettingsStore = create<SettingsState>()(
     {
       name: 'sc-settings',
       storage: createJSONStorage(() => tauriStorage),
-      version: 24,
+      version: 27,
       migrate: (persistedState) => {
         const prev = (persistedState ?? {}) as Partial<SettingsState> & {
           soundwaveDiversity?: number;
@@ -328,6 +337,9 @@ export const useSettingsStore = create<SettingsState>()(
         // заметно меньший нагрев). Красоту можно вернуть в Настройки → Оформление.
         // v24: Touch Bar-конфигурация (режим / порядок + видимость элементов /
         // always-лирика). Недостающие поля подтягиваются из DEFAULTS.
+        // v25: настраиваемая подпись кнопки Discord Rich Presence.
+        // v26: отдельная подпись кнопки для YouTube-треков.
+        // v27: pure black (#000000) Liquid Glass default background.
         const persistedElements = Array.isArray(prev.touchBarElements)
           ? prev.touchBarElements.filter(
               (e) => e && DEFAULT_TOUCHBAR_ELEMENTS.some((d) => d.id === e.id),
@@ -335,9 +347,15 @@ export const useSettingsStore = create<SettingsState>()(
           : [];
         const touchBarElements =
           persistedElements.length > 0 ? persistedElements : DEFAULT_TOUCHBAR_ELEMENTS;
+        const legacyBgs = ['#08080a', '#08060f', '#050e08', '#0c0507'];
+        const migratedBg =
+          !prev.bgPrimary || legacyBgs.includes(prev.bgPrimary.toLowerCase())
+            ? '#000000'
+            : prev.bgPrimary;
         return {
           ...DEFAULTS,
           ...prev,
+          bgPrimary: migratedBg,
           soundwaveMode: prev.soundwaveMode ?? inferredMode,
           perfMode: prev.perfMode === undefined ? DEFAULTS.perfMode : 'medium',
           touchBarElements,
@@ -368,6 +386,8 @@ export const useSettingsStore = create<SettingsState>()(
         discordRpcEnabled: s.discordRpcEnabled,
         discordRpcMode: s.discordRpcMode,
         discordRpcShowButton: s.discordRpcShowButton,
+        discordRpcButtonText: s.discordRpcButtonText,
+        discordRpcYouTubeButtonText: s.discordRpcYouTubeButtonText,
         discordRpcHidePaused: s.discordRpcHidePaused,
         soundwaveLanguages: s.soundwaveLanguages,
         soundwaveMode: s.soundwaveMode,

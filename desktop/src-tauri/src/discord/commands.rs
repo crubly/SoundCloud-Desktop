@@ -22,6 +22,7 @@ pub struct DiscordTrackInfo {
     is_playing: Option<bool>,
     mode: Option<DiscordRpcMode>,
     show_button: Option<bool>,
+    button_label: Option<String>,
     hide_on_pause: Option<bool>,
 }
 
@@ -129,9 +130,17 @@ pub fn discord_set_activity(
         activity = activity.timestamps(timestamps);
     }
 
+    let button_label = track
+        .button_label
+        .as_deref()
+        .map(str::trim)
+        .filter(|text| !text.is_empty())
+        .map(|text| text.chars().take(32).collect::<String>())
+        .unwrap_or_else(|| "Listen on SoundCloud".to_string());
+
     if show_button
         && let Some(ref url) = track.track_url {
-            activity = activity.buttons(vec![Button::new("Listen on SoundCloud", url)]);
+            activity = activity.buttons(vec![Button::new(&button_label, url)]);
         }
 
     let result = client.set_activity(activity);

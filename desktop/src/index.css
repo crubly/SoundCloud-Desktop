@@ -1,22 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --color-bg-primary: rgba(10, 10, 12, 0.95);
-  --color-bg-glass: rgba(255, 255, 255, 0.03);
-  --color-bg-glass-hover: rgba(255, 255, 255, 0.06);
-  --color-bg-glass-active: rgba(255, 255, 255, 0.09);
-  --color-border-glass: rgba(255, 255, 255, 0.06);
-  --color-border-glass-hi: rgba(255, 255, 255, 0.12);
-  --color-text-primary: rgba(255, 255, 255, 0.92);
-  --color-text-secondary: rgba(255, 255, 255, 0.55);
-  --color-text-tertiary: rgba(255, 255, 255, 0.25);
+  --color-bg-primary: #000000;
+  --color-bg-secondary: #070709;
+  --color-bg-tertiary: #111114;
+  --color-bg-glass: rgba(255, 255, 255, 0.045);
+  --color-bg-glass-hover: rgba(255, 255, 255, 0.085);
+  --color-bg-glass-active: rgba(255, 255, 255, 0.13);
+  --color-border-glass: rgba(255, 255, 255, 0.09);
+  --color-border-glass-hi: rgba(255, 255, 255, 0.22);
+  --color-text-primary: rgba(255, 255, 255, 0.96);
+  --color-text-secondary: rgba(255, 255, 255, 0.56);
+  --color-text-tertiary: rgba(255, 255, 255, 0.32);
   --color-accent: #ff5500;
   --color-accent-hover: #ff6a1a;
-  --color-accent-glow: rgba(255, 85, 0, 0.2);
-  --color-accent-selection: rgba(255, 85, 0, 0.3);
+  --color-accent-glow: rgba(255, 85, 0, 0.22);
+  --color-accent-selection: rgba(255, 85, 0, 0.32);
   --color-accent-contrast: #ffffff;
 
-  --font-sans: "Inter", "SF Pro Display", -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-sans: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Inter", system-ui, sans-serif;
   --font-serif: "Fraunces", Georgia, "Times New Roman", serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
   /* Geometric techno-display for hero numerals (STAR price) — bold, energy-core vibe. */
@@ -57,16 +59,26 @@
 /* Light mode: drop the live backdrop blur, keep the dark frosted look via a flat
    solid tint (visually close on a dark UI, zero per-repaint blur cost). */
 [data-perf="light"] .glass,
-[data-perf="light"] .glass-flat {
+[data-perf="light"] .glass-flat,
+[data-perf="light"] .liquid-glass,
+[data-perf="light"] .liquid-pill,
+[data-perf="light"] .liquid-action-btn,
+[data-perf="light"] .liquid-ios-dock {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  background: rgba(22, 22, 26, 0.82);
+  background: rgba(20, 20, 24, 0.92);
+}
+
+[data-perf="light"] .liquid-sidebar {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  background: rgba(10, 10, 12, 0.96);
 }
 
 [data-perf="light"] .glass-featured {
   backdrop-filter: none;
   -webkit-backdrop-filter: none;
-  background: rgba(16, 16, 20, 0.86);
+  background: rgba(14, 14, 18, 0.92);
 }
 
 [data-perf="light"] .npb-glass {
@@ -151,8 +163,22 @@ body,
 }
 
 #root {
-  background: rgb(8, 8, 10);
+  background: #000000;
   overflow: hidden;
+}
+
+/* On macOS, let native NSGlassEffectView / NSVisualEffectView shine through
+   the translucent sidebar while keeping the main content canvas pure black. */
+html[data-platform="macos"] #root {
+  background: transparent;
+}
+
+.main-canvas {
+  background: #000000;
+}
+
+html[data-platform="macos"] .main-canvas {
+  background: rgba(0, 0, 0, 0.96);
 }
 
 /* ── Text selection ─────────────────────────────────────────────
@@ -191,21 +217,258 @@ select,
   background: rgba(255, 255, 255, 0.15);
 }
 
-/* ── Glass ──────────────────────────────────────────────────── */
+/* ── Glass & macOS Tahoe / iOS 26 Liquid Glass System ──────────────────── */
 .glass {
-  background: rgba(255, 255, 255, 0.025);
-  backdrop-filter: blur(var(--glass-blur)) saturate(1.8);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.085) 0%,
+      rgba(255, 255, 255, 0.025) 45%,
+      rgba(255, 255, 255, 0.04) 100%
+    ),
+    rgba(16, 16, 20, 0.56);
+  backdrop-filter: blur(var(--glass-blur)) saturate(1.9);
+  -webkit-backdrop-filter: blur(var(--glass-blur)) saturate(1.9);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.22),
+    inset 0 -1px 0.5px rgba(255, 255, 255, 0.05),
+    0 14px 36px -12px rgba(0, 0, 0, 0.72);
 }
 
 .glass-hover:hover {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.04) 50%,
+      rgba(255, 255, 255, 0.06) 100%
+    ),
+    rgba(22, 22, 28, 0.65);
+  border-color: rgba(255, 255, 255, 0.18);
 }
 
 .glass-flat {
-  background: rgba(255, 255, 255, 0.025);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(255, 255, 255, 0.075);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+}
+
+/* Native macOS Tahoe / Emulated Windows & iOS 26 Liquid Glass Sidebar */
+.liquid-sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.055) 0%,
+      rgba(255, 255, 255, 0.015) 45%,
+      rgba(0, 0, 0, 0.35) 100%
+    ),
+    rgba(10, 10, 12, 0.72);
+  backdrop-filter: blur(52px) saturate(210%);
+  -webkit-backdrop-filter: blur(52px) saturate(210%);
+  border-right: 1px solid rgba(255, 255, 255, 0.09);
+  box-shadow:
+    inset -1px 0 0 rgba(255, 255, 255, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.12);
+}
+
+html[data-platform="macos"] .liquid-sidebar {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.045) 0%,
+      rgba(12, 12, 15, 0.48) 100%
+    ),
+    rgba(6, 6, 8, 0.46);
+  backdrop-filter: blur(44px) saturate(195%);
+  -webkit-backdrop-filter: blur(44px) saturate(195%);
+}
+
+/* Apple Music Tahoe Sidebar Navigation Item */
+.liquid-sidebar-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  width: 100%;
+  padding: 7px 11px;
+  border-radius: 10px;
+  font-size: 13.5px;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  color: rgba(255, 255, 255, 0.88);
+  transition:
+    background 0.18s var(--ease-apple),
+    color 0.18s var(--ease-apple),
+    box-shadow 0.18s var(--ease-apple),
+    transform 0.15s var(--ease-apple);
+}
+
+.liquid-sidebar-item:hover {
+  background: rgba(255, 255, 255, 0.065);
+  color: #ffffff;
+}
+
+.liquid-sidebar-item:active {
+  transform: scale(0.985);
+}
+
+.liquid-sidebar-item--active {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.095) 100%
+    );
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.25),
+    inset 0 -0.5px 0 rgba(255, 255, 255, 0.08),
+    0 4px 14px -4px rgba(0, 0, 0, 0.45);
+}
+
+.liquid-sidebar-item--active:hover {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.18) 0%,
+      rgba(255, 255, 255, 0.11) 100%
+    );
+}
+
+/* Floating Liquid Glass Capsule Pill (Top-Right Search/Filter, Back/Forward, Bottom-Left Orb Dock) */
+.liquid-pill {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.13) 0%,
+      rgba(255, 255, 255, 0.04) 48%,
+      rgba(255, 255, 255, 0.06) 100%
+    ),
+    rgba(22, 22, 26, 0.66);
+  backdrop-filter: blur(var(--glass-blur-soft)) saturate(200%);
+  -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(200%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.28),
+    inset 0 -1px 0.5px rgba(255, 255, 255, 0.06),
+    0 10px 28px -6px rgba(0, 0, 0, 0.68);
+  transition:
+    background 0.2s var(--ease-apple),
+    border-color 0.2s var(--ease-apple),
+    box-shadow 0.2s var(--ease-apple),
+    transform 0.18s var(--ease-apple);
+}
+
+.liquid-pill:hover {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.17) 0%,
+      rgba(255, 255, 255, 0.06) 48%,
+      rgba(255, 255, 255, 0.08) 100%
+    ),
+    rgba(28, 28, 34, 0.74);
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+/* Dark Liquid Glass Action Buttons (Reference 3: Circular Shuffle, Pill Play, Circular Download) */
+.liquid-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.045) 100%
+    ),
+    rgba(30, 30, 36, 0.72);
+  backdrop-filter: blur(24px) saturate(190%);
+  -webkit-backdrop-filter: blur(24px) saturate(190%);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.22),
+    0 8px 22px -6px rgba(0, 0, 0, 0.65);
+  color: var(--color-accent);
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    transform 0.18s var(--ease-apple),
+    background 0.18s var(--ease-apple),
+    border-color 0.18s var(--ease-apple),
+    box-shadow 0.18s var(--ease-apple);
+}
+
+.liquid-action-btn:hover {
+  transform: scale(1.03);
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.17) 0%,
+      rgba(255, 255, 255, 0.07) 100%
+    ),
+    rgba(38, 38, 45, 0.82);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.liquid-action-btn:active {
+  transform: scale(0.96);
+}
+
+/* Apple Music Tahoe Track Table Header & Rows (Reference 3) */
+.liquid-table-header {
+  display: grid;
+  align-items: center;
+  padding: 8px 16px;
+  font-size: 12px;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.46);
+  letter-spacing: -0.005em;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.liquid-table-header-col {
+  display: flex;
+  align-items: center;
+  padding-left: 12px;
+  border-left: 1px solid rgba(255, 255, 255, 0.09);
+  height: 14px;
+}
+
+.liquid-table-row {
+  position: relative;
+  border-radius: 10px;
+  transition: background 0.15s var(--ease-apple);
+}
+
+.liquid-table-row:hover {
+  background: rgba(255, 255, 255, 0.055);
+}
+
+.liquid-table-row[data-active="true"] {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* Floating iOS 26 Liquid Glass Bottom Tab Dock (narrow viewport / iOS mode) */
+.liquid-ios-dock {
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.16) 0%,
+      rgba(255, 255, 255, 0.04) 48%,
+      rgba(255, 255, 255, 0.08) 100%
+    ),
+    rgba(16, 16, 20, 0.72);
+  backdrop-filter: blur(36px) saturate(210%);
+  -webkit-backdrop-filter: blur(36px) saturate(210%);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  box-shadow:
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.32),
+    inset 0 -1px 0.5px rgba(255, 255, 255, 0.08),
+    0 20px 50px rgba(0, 0, 0, 0.85);
 }
 
 /* ── Shimmer ───────────────────────────────────────────────── */
@@ -946,17 +1209,17 @@ select,
   opacity: 1;
 }
 
-/* the floating capsule — frame carries shadow + the gentle float */
+/* the floating capsule — Apple Music macOS Tahoe / iOS 26 Liquid Glass Capsule */
 .npb-dock {
   position: relative;
   z-index: 1;
   pointer-events: auto;
-  width: max-content;
-  max-width: calc(100% - 32px);
-  border-radius: 28px;
+  width: min(880px, calc(100% - 36px));
+  max-width: calc(100% - 36px);
+  border-radius: 9999px;
   box-shadow:
-    0 30px 70px -22px rgba(0, 0, 0, 0.78),
-    0 0 64px -18px var(--color-accent-glow);
+    0 24px 60px -14px rgba(0, 0, 0, 0.88),
+    0 8px 24px -6px rgba(0, 0, 0, 0.65);
 }
 
 /* the ONLY backdrop-filter — isolated in its own GPU layer */
@@ -970,28 +1233,31 @@ select,
   background:
     linear-gradient(
       180deg,
-      rgba(255, 255, 255, 0.09),
-      rgba(255, 255, 255, 0.022) 44%,
-      rgba(255, 255, 255, 0.01)
+      rgba(255, 255, 255, 0.14) 0%,
+      rgba(255, 255, 255, 0.045) 45%,
+      rgba(255, 255, 255, 0.065) 100%
     ),
-    rgba(15, 15, 19, 0.55);
-  border: 1px solid rgba(255, 255, 255, 0.11);
+    rgba(24, 24, 28, 0.64);
+  border: 1px solid rgba(255, 255, 255, 0.16);
   box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.2) inset,
+    inset 0 1px 0.5px rgba(255, 255, 255, 0.32),
+    inset 0 -1px 0.5px rgba(255, 255, 255, 0.08),
     0 -10px 26px -18px rgba(0, 0, 0, 0.7) inset;
-  backdrop-filter: blur(var(--glass-blur-soft)) saturate(1.6);
-  -webkit-backdrop-filter: blur(var(--glass-blur-soft)) saturate(1.6);
+  backdrop-filter: blur(36px) saturate(210%);
+  -webkit-backdrop-filter: blur(36px) saturate(210%);
   contain: strict;
   transform: translateZ(0);
 }
 
-/* accent tint in the corner */
+/* subtle specular refraction sheen */
 .npb-glass::before {
   content: "";
   position: absolute;
   inset: 0;
-  background: radial-gradient(120% 180% at 6% 0%, var(--color-accent-glow) 0%, transparent 42%);
-  opacity: 0.5;
+  background:
+    radial-gradient(90% 140% at 50% 0%, rgba(255, 255, 255, 0.12) 0%, transparent 55%),
+    radial-gradient(70% 140% at 15% 100%, var(--color-accent-glow) 0%, transparent 50%);
+  opacity: 0.45;
 }
 
 /* fine grain for material realism */
@@ -999,7 +1265,7 @@ select,
   content: "";
   position: absolute;
   inset: 0;
-  opacity: 0.04;
+  opacity: 0.03;
   mix-blend-mode: overlay;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
@@ -1011,14 +1277,16 @@ select,
   isolation: isolate;
   display: flex;
   flex-direction: column;
-  gap: 7px;
-  padding: 10px 18px 8px;
+  gap: 0;
+  padding: 8px 22px;
 }
 
 .npb-row {
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 46px;
 }
 
 .npb-sep {
@@ -1038,18 +1306,18 @@ select,
 
 .npb-art {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   flex: 0 0 auto;
-  border-radius: 13px;
+  border-radius: 10px;
   overflow: hidden;
   cursor: pointer;
   box-shadow:
-    0 8px 20px -8px rgba(0, 0, 0, 0.75),
-    0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+    0 6px 16px -6px rgba(0, 0, 0, 0.78),
+    0 0 0 1px rgba(255, 255, 255, 0.14) inset;
   transition:
-    transform 0.3s var(--ease-apple),
-    box-shadow 0.3s var(--ease-apple);
+    transform 0.25s var(--ease-apple),
+    box-shadow 0.25s var(--ease-apple);
 }
 
 .npb-art:hover {
@@ -1207,52 +1475,38 @@ select,
   white-space: nowrap;
 }
 
-/* play orb — the hero */
+/* play button — Apple Music Tahoe sleek translucent/white play control */
 .npb-play {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 38px;
+  height: 38px;
   flex: 0 0 auto;
-  margin: 0 3px;
+  margin: 0 2px;
   display: grid;
   place-items: center;
   border-radius: 50%;
   cursor: pointer;
   border: 0;
-  background: radial-gradient(
-    125% 125% at 32% 24%,
-    var(--color-accent-hover),
-    var(--color-accent) 68%
-  );
-  box-shadow:
-    0 0 0 1px rgba(255, 255, 255, 0.26) inset,
-    0 8px 20px -5px var(--color-accent-glow),
-    0 0 30px -6px var(--color-accent-glow);
+  background: transparent;
+  color: rgba(255, 255, 255, 0.94);
   transition:
-    transform 0.25s var(--ease-apple),
-    box-shadow 0.25s var(--ease-apple);
+    transform 0.2s var(--ease-apple),
+    background 0.2s var(--ease-apple),
+    color 0.2s var(--ease-apple);
 }
 
 .npb-play:hover {
-  transform: translateY(-1px) scale(1.06);
+  background: rgba(255, 255, 255, 0.11);
+  color: #ffffff;
+  transform: scale(1.06);
 }
 
 .npb-play:active {
-  transform: scale(0.95);
+  transform: scale(0.92);
 }
 
 .npb-play::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: 50%;
-  pointer-events: none;
-  border: 1.5px solid var(--color-accent);
-  opacity: 0;
-}
-
-.npb-dock[data-playing="true"] .npb-play::after {
-  animation: npb-pulse 2.8s var(--ease-apple) infinite;
+  display: none;
 }
 
 @keyframes npb-pulse {
@@ -1317,8 +1571,8 @@ select,
   y: 1px;
   width: calc(100% - 2px);
   height: calc(100% - 2px);
-  rx: 27px;
-  ry: 27px;
+  rx: 31px;
+  ry: 31px;
   fill: none;
 }
 

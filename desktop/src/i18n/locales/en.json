@@ -32,7 +32,23 @@
     "pinPlaylist": "Pin playlist",
     "unpinPlaylist": "Unpin playlist",
     "pinned": "Pinned to sidebar",
-    "unpinned": "Removed from sidebar"
+    "unpinned": "Removed from sidebar",
+    "new": "New",
+    "radio": "Radio",
+    "pins": "Pins",
+    "recentlyAdded": "Recently Added",
+    "artists": "Artists",
+    "albums": "Albums",
+    "songs": "Songs",
+    "playlists": "Playlists",
+    "allPlaylists": "All Playlists",
+    "favouriteSongs": "Favourite Songs"
+  },
+  "table": {
+    "song": "Song",
+    "artist": "Artist",
+    "album": "Album",
+    "time": "Time"
   },
   "player": {
     "queue": "Queue",
@@ -319,7 +335,8 @@
     "yearRange": "{{from}}–{{to}}",
     "moreCrates": "More crates by {{name}}",
     "lastEdited": "Updated {{date}}",
-    "emptyCrate": "This crate is empty — start digging"
+    "emptyCrate": "This crate is empty — start digging",
+    "findInPlaylist": "Find in Playlist"
   },
   "user": {
     "followers": "Followers",
@@ -401,6 +418,13 @@
     }
   },
   "home": {
+    "topPicks": "Top Picks for You",
+    "madeForYou": "Made for You",
+    "userStation": "{{user}}'s Station",
+    "featuringArtist": "Featuring {{artist}}",
+    "similarArtists": "{{artist}} & Similar Artists",
+    "discoveryStation": "Discovery Station",
+    "recentlyPlayed": "Recently Played",
     "yourWave": "Your wave",
     "freshReleases": "Fresh Releases",
     "reposted": "Reposted",
@@ -652,6 +676,11 @@
     "discordRpcModeActivity": "Activity only",
     "discordRpcButton": "Show SoundCloud button",
     "discordRpcButtonDesc": "Display the button that opens the track in SoundCloud",
+    "discordRpcButtonText": "Button text",
+    "discordRpcButtonTextPlaceholder": "Listen on SoundCloud",
+    "discordRpcButtonTextDesc": "Leave empty to use the default text. Maximum 32 characters.",
+    "discordRpcYouTubeButtonText": "YouTube button text",
+    "discordRpcYouTubeButtonTextPlaceholder": "Listen on YouTube",
     "discordRpcHidePaused": "Hide while paused",
     "discordRpcHidePausedDesc": "Remove the Discord presence when playback is paused",
     "normalizeVolume": "Volume normalization",

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { type Aura, auraRgba } from '../../lib/aura';
+import type { Aura } from '../../lib/aura';
 import { fc } from '../../lib/formatters';
 import { usePerfMode } from '../../lib/perf';
 import { useWheelHorizontalScroll } from '../../lib/useWheelHorizontalScroll';
@@ -21,7 +21,7 @@ interface TabDockProps<T extends string = string> {
 
 const useIsoLayoutEffect = typeof window !== 'undefined' ? useLayoutEffect : useEffect;
 
-function TabDockImpl<T extends string>({ tabs, active, onChange, aura }: TabDockProps<T>) {
+function TabDockImpl<T extends string>({ tabs, active, onChange }: TabDockProps<T>) {
   const perf = usePerfMode();
   const dockB = perf.blur(40);
   const dockRef = useRef<HTMLDivElement>(null);
@@ -137,26 +137,30 @@ function TabDockImpl<T extends string>({ tabs, active, onChange, aura }: TabDock
         onClickCapture={onClickCapture}
         onMouseEnter={() => setIsHovered(true)}
         onMouseLeave={() => setIsHovered(false)}
-        className={`pointer-events-auto relative flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-2xl min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x select-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] ${
+        className={`pointer-events-auto relative flex items-center gap-0.5 sm:gap-1 p-1 sm:p-1.5 rounded-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain touch-pan-x select-none [&::-webkit-scrollbar]:hidden [scrollbar-width:none] ${
           overflows ? 'cursor-grab' : 'cursor-default'
         }`}
         style={{
-          background: dockB > 0 ? 'rgba(15,15,18,0.55)' : 'rgba(15,15,18,0.92)',
-          backdropFilter: dockB > 0 ? `blur(${dockB}px) saturate(180%)` : undefined,
-          WebkitBackdropFilter: dockB > 0 ? `blur(${dockB}px) saturate(180%)` : undefined,
+          background:
+            dockB > 0
+              ? 'linear-gradient(180deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%), rgba(18,18,22,0.68)'
+              : 'rgba(18,18,22,0.92)',
+          backdropFilter: dockB > 0 ? `blur(${dockB}px) saturate(200%)` : undefined,
+          WebkitBackdropFilter: dockB > 0 ? `blur(${dockB}px) saturate(200%)` : undefined,
           boxShadow:
-            '0 24px 60px rgba(0,0,0,0.45), inset 0 0 0 1px rgba(255,255,255,0.08), inset 0 1px 0 rgba(255,255,255,0.08)',
+            '0 20px 50px rgba(0,0,0,0.65), inset 0 1px 0.5px rgba(255,255,255,0.26), inset 0 0 0 1px rgba(255,255,255,0.12)',
         }}
       >
         {pill && (
           <div
-            className="absolute top-1 bottom-1 sm:top-1.5 sm:bottom-1.5 rounded-xl transition-all duration-500 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
+            className="absolute top-1 bottom-1 sm:top-1.5 sm:bottom-1.5 rounded-full transition-all duration-400 ease-[cubic-bezier(0.2,0.8,0.2,1)]"
             style={{
               left: pill.x,
               width: pill.w,
-              background: `linear-gradient(180deg, ${auraRgba(aura, 0.22)}, ${auraRgba(aura, 0.06)})`,
-              border: `0.5px solid ${auraRgba(aura, 0.35)}`,
-              boxShadow: `0 6px 20px ${auraRgba(aura, 0.25)}, inset 0 0.5px 0 rgba(255,255,255,0.12)`,
+              background:
+                'linear-gradient(180deg, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0.1) 100%)',
+              border: '0.5px solid rgba(255,255,255,0.28)',
+              boxShadow: 'inset 0 1px 0.5px rgba(255,255,255,0.3), 0 4px 14px rgba(0,0,0,0.45)',
             }}
           />
         )}

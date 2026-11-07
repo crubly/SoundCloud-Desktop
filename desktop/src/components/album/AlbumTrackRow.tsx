@@ -1,16 +1,8 @@
 import { memo } from 'react';
 import { preloadTrack } from '../../lib/audio';
-import { type Aura, auraRgb, auraRgba, isLight } from '../../lib/aura';
+import type { Aura } from '../../lib/aura';
 import { art, dur } from '../../lib/formatters';
-import {
-  ListPlus,
-  Music,
-  pauseBlack14,
-  pauseWhite14,
-  playBlack14,
-  playWhite14,
-} from '../../lib/icons';
-import { usePerfMode } from '../../lib/perf';
+import { ListPlus, Music, pauseWhite14, playWhite14 } from '../../lib/icons';
 import { useTrackPlay } from '../../lib/useTrackPlay';
 import type { Track } from '../../stores/player';
 import { AddToPlaylistDialog } from '../music/AddToPlaylistDialog';
@@ -25,65 +17,35 @@ interface AlbumTrackRowProps {
   aura: Aura;
 }
 
-function AlbumTrackRowImpl({ track, position, queue, aura }: AlbumTrackRowProps) {
+function AlbumTrackRowImpl({ track, position, queue }: AlbumTrackRowProps) {
   const { isThis, isThisPlaying, togglePlay } = useTrackPlay(track, queue);
   const cover = art(track.artwork_url, 't200x200');
-  const lightAura = isLight(aura);
-  const playIcon = lightAura ? playBlack14 : playWhite14;
-  const pauseIcon = lightAura ? pauseBlack14 : pauseWhite14;
-  const hoverB = usePerfMode().blur(16);
 
   return (
     <div
-      className="group flex items-center gap-4 px-4 py-2.5 rounded-2xl transition-all duration-300 ease-[cubic-bezier(0.2,0.8,0.2,1)] select-none"
-      style={{
-        background: isThis
-          ? `linear-gradient(90deg, ${auraRgba(aura, 0.16)}, ${auraRgba(aura, 0.04)} 70%, transparent)`
-          : undefined,
-        boxShadow: isThis ? `inset 0 0 0 1px ${auraRgba(aura, 0.35)}` : undefined,
-      }}
-      onMouseEnter={(e) => {
-        preloadTrack(track.urn);
-        if (!isThis) e.currentTarget.style.background = 'rgba(255,255,255,0.04)';
-      }}
-      onMouseLeave={(e) => {
-        if (!isThis) e.currentTarget.style.background = '';
-      }}
+      data-active={isThis ? 'true' : undefined}
+      onDoubleClick={togglePlay}
+      onMouseEnter={() => preloadTrack(track.urn)}
+      className="group liquid-table-row flex items-center gap-3.5 px-3 py-2 select-none"
     >
+      <LikeButton track={track} />
+
       <div
-        className="w-10 h-10 flex items-center justify-center shrink-0 cursor-pointer relative"
+        className="w-7 h-7 flex items-center justify-center shrink-0 cursor-pointer relative"
         onClick={togglePlay}
       >
         {isThisPlaying ? (
-          <div
-            className="w-9 h-9 rounded-full flex items-center justify-center"
-            style={{
-              background: auraRgb(aura),
-              boxShadow: `0 0 24px ${auraRgba(aura, 0.5)}`,
-            }}
-          >
-            {pauseIcon}
+          <div className="w-7 h-7 rounded-full bg-accent text-accent-contrast flex items-center justify-center">
+            {pauseWhite14}
           </div>
         ) : (
           <>
-            <span className="text-[13px] text-white/30 tabular-nums font-semibold group-hover:opacity-0 transition-opacity">
+            <span className="text-[12.5px] text-white/35 tabular-nums font-medium group-hover:opacity-0 transition-opacity">
               {position}
             </span>
             <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-              <div
-                className="w-9 h-9 rounded-full flex items-center justify-center"
-                style={{
-                  background: lightAura
-                    ? auraRgba(aura, 0.85)
-                    : hoverB > 0
-                      ? 'rgba(255,255,255,0.12)'
-                      : 'rgba(54,54,60,0.92)',
-                  boxShadow: `inset 0 0 0 1px ${auraRgba(aura, 0.3)}`,
-                  backdropFilter: hoverB > 0 ? `blur(${hoverB}px)` : undefined,
-                  WebkitBackdropFilter: hoverB > 0 ? `blur(${hoverB}px)` : undefined,
-                }}
-              >
-                {playIcon}
+              <div className="w-7 h-7 rounded-full bg-white/15 flex items-center justify-center">
+                {playWhite14}
               </div>
             </div>
           </>
@@ -91,8 +53,8 @@ function AlbumTrackRowImpl({ track, position, queue, aura }: AlbumTrackRowProps)
       </div>
 
       <div
-        className="relative w-10 h-10 rounded-lg overflow-hidden shrink-0 transition-transform duration-500 group-hover:scale-105"
-        style={{ boxShadow: 'inset 0 0 0 1px rgba(255,255,255,0.08)' }}
+        onClick={togglePlay}
+        className="relative w-[42px] h-[42px] rounded-[8px] overflow-hidden shrink-0 ring-1 ring-white/[0.1] cursor-pointer"
       >
         {cover ? (
           <img src={cover} alt="" className="w-full h-full object-cover" loading="lazy" />
@@ -109,21 +71,22 @@ function AlbumTrackRowImpl({ track, position, queue, aura }: AlbumTrackRowProps)
         <TrackStatusBadges meta={track._scd_meta} />
       </div>
 
-      <div className="flex items-center gap-0.5 shrink-0">
-        <LikeButton track={track} />
+      <div className="flex items-center gap-1 shrink-0">
         <AddToPlaylistDialog trackUrns={[track.urn]}>
           <button
             type="button"
-            className="cursor-pointer w-8 h-8 rounded-lg flex items-center justify-center text-white/30 hover:text-white/80 hover:bg-white/[0.06] opacity-0 group-hover:opacity-100 transition-all"
+            className="cursor-pointer w-7 h-7 rounded-lg flex items-center justify-center text-white/35 hover:text-white hover:bg-white/[0.08] opacity-0 group-hover:opacity-100 transition-all"
           >
             <ListPlus size={14} />
           </button>
         </AddToPlaylistDialog>
       </div>
 
-      <span className="text-[12px] text-white/30 tabular-nums font-medium shrink-0 w-12 text-right">
+      <span className="text-[12.5px] text-white/45 tabular-nums font-normal shrink-0 w-12 text-right">
         {dur(track.duration)}
       </span>
+
+      <div className="pointer-events-none absolute bottom-0 left-[112px] right-3 h-px bg-white/[0.06]" />
     </div>
   );
 }

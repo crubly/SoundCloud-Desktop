@@ -37,7 +37,32 @@
     "pinPlaylist": "Calma listesini sabitle",
     "unpinPlaylist": "Calma listesinin sabitini kaldir",
     "pinned": "Kenar cubuguna sabitlendi",
-    "unpinned": "Kenar cubugundan kaldirildi"
+    "unpinned": "Kenar cubugundan kaldirildi",
+    "new": "Yeni",
+    "radio": "Radyo",
+    "pins": "Sabitlenenler",
+    "recentlyAdded": "Son Eklenenler",
+    "artists": "Sanatcilar",
+    "albums": "Albumler",
+    "songs": "Sarkilar",
+    "playlists": "Calma Listeleri",
+    "allPlaylists": "Tum Calma Listeleri",
+    "favouriteSongs": "Favori Sarkilar"
+  },
+  "table": {
+    "song": "Sarki",
+    "artist": "Sanatci",
+    "album": "Album",
+    "time": "Sure"
+  },
+  "home": {
+    "topPicks": "Senin Icin Secimler",
+    "recentlyPlayed": "Son Calinanlar",
+    "madeForYou": "Senin Icin",
+    "stationFor": "{{name}} Radyosu",
+    "discoveryStation": "Kesif Istasyonu",
+    "featuring": "{{artist}} Ile",
+    "similarArtists": "{{artist}} ve Benzerleri"
   },
   "player": {
     "queue": "Kuyruk",
@@ -233,7 +258,8 @@
     "deleteConfirm": "\"{{title}}\" silinsin mi? Bu islem geri alinamaz.",
     "deleted": "Calma listesi silindi",
     "private": "Gizli",
-    "public": "Herkese acik"
+    "public": "Herkese acik",
+    "findInPlaylist": "Listede Ara"
   },
   "user": {
     "followers": "Takipciler",
@@ -535,6 +561,11 @@
     "discordRpcModeActivity": "Yalnizca etkinlik",
     "discordRpcButton": "SoundCloud dugmesi",
     "discordRpcButtonDesc": "Parcayi SoundCloud'da acan dugmeyi goster",
+    "discordRpcButtonText": "Dugme metni",
+    "discordRpcButtonTextPlaceholder": "SoundCloud'da dinle",
+    "discordRpcButtonTextDesc": "Varsayilan metin icin bos birakin. En fazla 32 karakter.",
+    "discordRpcYouTubeButtonText": "YouTube dugme metni",
+    "discordRpcYouTubeButtonTextPlaceholder": "YouTube'da dinle",
     "discordRpcHidePaused": "Duraklatinca gizle",
     "discordRpcHidePausedDesc": "Oynatma duraklatildiginda Discord durumunu kaldir",
     "normalizeVolume": "Ses duzeyi dengeleme",

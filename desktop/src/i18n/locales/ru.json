@@ -32,7 +32,23 @@
     "pinPlaylist": "Закрепить плейлист",
     "unpinPlaylist": "Открепить плейлист",
     "pinned": "Плейлист закреплён в сайдбаре",
-    "unpinned": "Плейлист убран из сайдбара"
+    "unpinned": "Плейлист убран из сайдбара",
+    "new": "Новое",
+    "radio": "Радио",
+    "pins": "Закреплённые",
+    "recentlyAdded": "Недавно добавленные",
+    "artists": "Артисты",
+    "albums": "Альбомы",
+    "songs": "Песни",
+    "playlists": "Плейлисты",
+    "allPlaylists": "Все плейлисты",
+    "favouriteSongs": "Любимые треки"
+  },
+  "table": {
+    "song": "Песня",
+    "artist": "Артист",
+    "album": "Альбом",
+    "time": "Время"
   },
   "player": {
     "queue": "Очередь",
@@ -323,7 +339,8 @@
     "yearRange": "{{from}}–{{to}}",
     "moreCrates": "Ещё подборки от {{name}}",
     "lastEdited": "Обновлено {{date}}",
-    "emptyCrate": "Подборка пуста — пора копать"
+    "emptyCrate": "Подборка пуста — пора копать",
+    "findInPlaylist": "Найти в плейлисте"
   },
   "user": {
     "followers": "Подписчики",
@@ -405,6 +422,13 @@
     }
   },
   "home": {
+    "topPicks": "Лучшее для вас",
+    "madeForYou": "Создано для вас",
+    "userStation": "Станция {{user}}",
+    "featuringArtist": "С участием {{artist}}",
+    "similarArtists": "{{artist}} и похожие артисты",
+    "discoveryStation": "Станция открытий",
+    "recentlyPlayed": "Недавно прослушано",
     "yourWave": "Ваша волна",
     "freshReleases": "Свежие релизы",
     "reposted": "Репост",
@@ -663,6 +687,11 @@
     "discordRpcModeActivity": "Только активность",
     "discordRpcButton": "Кнопка SoundCloud",
     "discordRpcButtonDesc": "Показывать кнопку перехода к треку в SoundCloud",
+    "discordRpcButtonText": "Текст кнопки",
+    "discordRpcButtonTextPlaceholder": "Слушать в SoundCloud",
+    "discordRpcButtonTextDesc": "Оставьте пустым для стандартного текста. Максимум 32 символа.",
+    "discordRpcYouTubeButtonText": "Текст кнопки YouTube",
+    "discordRpcYouTubeButtonTextPlaceholder": "Слушать на YouTube",
     "discordRpcHidePaused": "Скрывать на паузе",
     "discordRpcHidePausedDesc": "Убирать присутствие в Discord, когда воспроизведение на паузе",
     "normalizeVolume": "Нормализация громкости",

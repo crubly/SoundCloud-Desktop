@@ -36,6 +36,7 @@ import {
   Heart as _Heart,
   Home as _Home,
   Laptop as _Laptop,
+  LayoutGrid as _LayoutGrid,
   Library as _Library,
   Link as _Link,
   Link2 as _Link2,
@@ -45,15 +46,19 @@ import {
   Lock as _Lock,
   MapPin as _MapPin,
   MessageCircle as _MessageCircle,
+  MessageSquareQuote as _MessageSquareQuote,
   MicVocal as _MicVocal,
   Minus as _Minus,
+  MoreHorizontal as _MoreHorizontal,
   Music as _Music,
   PanelLeftClose as _PanelLeftClose,
   PanelLeftOpen as _PanelLeftOpen,
   Pause as _Pause,
+  Pin as _Pin,
   Play as _Play,
   Plus as _Plus,
   Power as _Power,
+  Radio as _Radio,
   RefreshCw as _RefreshCw,
   Repeat as _Repeat,
   Repeat1 as _Repeat1,
@@ -136,6 +141,7 @@ export const Instagram = memo(({ size, className }: { size?: number; className?:
   <SimpleIcon icon={siInstagram} size={size} className={className} />
 ));
 export const Library = memo(_Library);
+export const LayoutGrid = memo(_LayoutGrid);
 export const LinkIcon = memo(_Link);
 export const Laptop = memo(_Laptop);
 export const ListMusic = memo(_ListMusic);
@@ -145,13 +151,17 @@ export const Lock = memo(_Lock);
 export const MapPin = memo(_MapPin);
 export const MicVocal = memo(_MicVocal);
 export const MessageCircle = memo(_MessageCircle);
+export const MessageSquareQuote = memo(_MessageSquareQuote);
 export const Minus = memo(_Minus);
+export const MoreHorizontal = memo(_MoreHorizontal);
 export const Music = memo(_Music);
 export const PanelLeftClose = memo(_PanelLeftClose);
 export const PanelLeftOpen = memo(_PanelLeftOpen);
 export const Pause = memo(_Pause);
+export const Pin = memo(_Pin);
 export const Play = memo(_Play);
 export const Plus = memo(_Plus);
+export const Radio = memo(_Radio);
 export const Repeat = memo(_Repeat);
 export const Repeat1 = memo(_Repeat1);
 export const RefreshCw = memo(_RefreshCw);
@@ -218,6 +228,10 @@ export const playWhite16 = (
 // Play / Pause (filled, currentColor)
 export const playCurrent16 = <_Play size={16} fill="currentColor" strokeWidth={0} />;
 export const pauseCurrent16 = <_Pause size={16} fill="currentColor" strokeWidth={0} />;
+export const playCurrent20 = (
+  <_Play size={20} fill="currentColor" strokeWidth={0} className="ml-0.5" />
+);
+export const pauseCurrent20 = <_Pause size={20} fill="currentColor" strokeWidth={0} />;
 
 // Play / Pause (outline / misc)
 export const playIcon32 = <_Play size={32} />;

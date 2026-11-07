@@ -4,6 +4,7 @@ import { useSettingsStore } from '../stores/settings';
 import { getCurrentTime, subscribePlaybackTime } from './audio';
 import { trackedInvoke as invoke } from './diagnostics';
 import { getArtistDisplay, getDisplayTitle } from './track-display';
+import { isYouTubeUrn } from './youtube';
 
 let connected = false;
 let lastConnectAttemptAt = 0;
@@ -49,8 +50,13 @@ async function updatePresence(track: Track, elapsedSecs: number) {
   if (!(await ensureConnected())) return;
 
   const isPlaying = usePlayerStore.getState().isPlaying;
-  const { discordRpcMode, discordRpcShowButton, discordRpcHidePaused } =
-    useSettingsStore.getState();
+  const {
+    discordRpcMode,
+    discordRpcShowButton,
+    discordRpcButtonText,
+    discordRpcYouTubeButtonText,
+    discordRpcHidePaused,
+  } = useSettingsStore.getState();
   const display = getArtistDisplay(track);
   const loop = usePlayerStore.getState().abLoop;
   const displayTitle = `${getDisplayTitle(track)}${loop?.b != null ? LOOPED_PART_SUFFIX : ''}`;
@@ -71,6 +77,7 @@ async function updatePresence(track: Track, elapsedSecs: number) {
           is_playing: isPlaying,
           mode: discordRpcMode,
           show_button: discordRpcShowButton,
+          button_label: isYouTubeUrn(track.urn) ? discordRpcYouTubeButtonText : discordRpcButtonText,
           hide_on_pause: discordRpcHidePaused,
         },
       });
@@ -154,6 +161,8 @@ useSettingsStore.subscribe((state, prev) => {
     state.discordRpcEnabled !== prev.discordRpcEnabled ||
     state.discordRpcMode !== prev.discordRpcMode ||
     state.discordRpcShowButton !== prev.discordRpcShowButton ||
+    state.discordRpcButtonText !== prev.discordRpcButtonText ||
+    state.discordRpcYouTubeButtonText !== prev.discordRpcYouTubeButtonText ||
     state.discordRpcHidePaused !== prev.discordRpcHidePaused;
 
   if (!rpcSettingsChanged) return;

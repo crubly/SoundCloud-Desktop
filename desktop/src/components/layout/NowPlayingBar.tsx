@@ -18,11 +18,12 @@ import { purgeDislikedFromQueue, toggleDislike, useDislikeStatus } from '../../l
 import { art, formatTime } from '../../lib/formatters';
 import {
   audioLines16,
+  Cloud,
   Heart,
   listMusic16,
-  MicVocal,
-  pauseBlack20,
-  playBlack20,
+  MessageSquareQuote,
+  pauseCurrent20,
+  playCurrent20,
   repeat1Icon16,
   repeatAbIcon16,
   repeatIcon16,
@@ -30,6 +31,7 @@ import {
   skipBack20,
   skipForward20,
   slidersHorizontal16,
+  Star,
   ThumbsDown,
   volume1Icon16,
   volume2Icon16,
@@ -505,11 +507,11 @@ function LikeButton({
       type="button"
       onClick={toggle}
       title={t('track.likes')}
-      className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 cursor-pointer hover:bg-white/[0.04] ${
-        liked ? 'text-accent' : 'text-white/30 hover:text-white/60'
+      className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 transition-all duration-200 cursor-pointer hover:bg-white/[0.06] ${
+        liked ? 'text-accent' : 'text-white/35 hover:text-white/75'
       }`}
     >
-      <Heart size={16} fill={liked ? 'currentColor' : 'none'} />
+      <Star size={15} fill={liked ? 'currentColor' : 'none'} />
     </button>
   );
 }
@@ -570,7 +572,7 @@ const PlayPauseBtn = React.memo(() => {
       title={isPlaying ? t('track.pause') : t('track.play')}
       className="npb-play"
     >
-      {isPlaying ? pauseBlack20 : playBlack20}
+      {isPlaying ? pauseCurrent20 : playCurrent20}
     </button>
   );
 });
@@ -661,7 +663,7 @@ const LyricsBtn = React.memo(() => {
       }}
       className={btnClass(open, 'sm')}
     >
-      <MicVocal size={16} />
+      <MessageSquareQuote size={16} />
     </button>
   );
 });
@@ -901,35 +903,51 @@ const TuningBtn = React.memo(() => {
 
 /* ── Track meta (art + title) for the pill ───────────────────── */
 
-const PillTrack = React.memo(({ loadProgress }: { loadProgress: number | null }) => {
-  const { t } = useTranslation();
-  const navigate = useNavigate();
-  const currentTrack = usePlayerStore((s) => s.currentTrack);
+const PillTrack = React.memo(
+  ({
+    loadProgress,
+    showCluster,
+    showTimeline,
+  }: {
+    loadProgress: number | null;
+    showCluster: boolean;
+    showTimeline: boolean;
+  }) => {
+    const navigate = useNavigate();
+    const currentTrack = usePlayerStore((s) => s.currentTrack);
 
-  if (!currentTrack) {
+    if (!currentTrack) {
+      return (
+        <div className="flex-1 flex items-center justify-center min-w-[140px] py-1">
+          <Cloud size={22} className="text-white/30" fill="currentColor" strokeWidth={0} />
+        </div>
+      );
+    }
+
     return (
-      <div className="npb-meta">
-        <div className="npb-art">
-          <div className="npb-artfb" />
-        </div>
-        <div className="npb-txt">
-          <span className="npb-sub">{t('player.notPlaying')}</span>
-        </div>
-      </div>
+      <PillTrackBody
+        track={currentTrack}
+        navigate={navigate}
+        loadProgress={loadProgress}
+        showCluster={showCluster}
+        showTimeline={showTimeline}
+      />
     );
-  }
-
-  return <PillTrackBody track={currentTrack} navigate={navigate} loadProgress={loadProgress} />;
-});
+  },
+);
 
 const PillTrackBody = React.memo(function PillTrackBody({
   track,
   navigate,
   loadProgress,
+  showCluster,
+  showTimeline,
 }: {
   track: Track;
   navigate: ReturnType<typeof useNavigate>;
   loadProgress: number | null;
+  showCluster: boolean;
+  showTimeline: boolean;
 }) {
   const openLyricsPanel = useLyricsStore((s) => s.openPanel);
   const artistDisplay = useArtistDisplay(track);
@@ -939,7 +957,7 @@ const PillTrackBody = React.memo(function PillTrackBody({
   const hasArtistLink = artistLinks.some((it) => it.target);
 
   return (
-    <div className="npb-meta">
+    <div className="flex-1 flex items-center gap-3 min-w-0 px-2">
       <div className="npb-art" onClick={() => openLyricsPanel({ rightPanelOpen: false })}>
         {artworkSmall ? <img src={artworkSmall} alt="" /> : <div className="npb-artfb" />}
         {/* spinning vinyl ring + live "playing" equaliser — animated only while playing */}
@@ -952,19 +970,33 @@ const PillTrackBody = React.memo(function PillTrackBody({
         </span>
         {loadProgress != null && <div className="npb-art-load">{loadPercent(loadProgress)}%</div>}
       </div>
-      <div className="npb-txt">
-        <span
-          className="npb-ttl"
-          onClick={() => navigate(`/track/${encodeURIComponent(track.urn)}`)}
-        >
-          {displayTitle}
-        </span>
-        <span className={`npb-sub${hasArtistLink ? ' is-link' : ''}`}>
-          <UploadKindDot kind={artistDisplay.uploadKind} />
-          <span>
-            <ArtistNameLinks items={artistLinks} />
-          </span>
-        </span>
+
+      <div className="flex-1 flex flex-col justify-center min-w-0 gap-0.5">
+        <div className="flex items-center justify-between gap-2 min-w-0">
+          <div className="min-w-0 flex-1 flex items-baseline gap-2 overflow-hidden">
+            <span
+              className="npb-ttl"
+              onClick={() => navigate(`/track/${encodeURIComponent(track.urn)}`)}
+            >
+              {displayTitle}
+            </span>
+            <span className={`npb-sub shrink-0 max-w-[160px]${hasArtistLink ? ' is-link' : ''}`}>
+              <UploadKindDot kind={artistDisplay.uploadKind} />
+              <span>
+                <ArtistNameLinks items={artistLinks} />
+              </span>
+            </span>
+          </div>
+          <div className="flex items-center gap-1 shrink-0">
+            {showTimeline && <LaneTimes />}
+            {showCluster && <ReactCluster />}
+          </div>
+        </div>
+        {showTimeline && (
+          <div className="-my-1">
+            <ProgressSlider />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1070,51 +1102,43 @@ export const NowPlayingBar = React.memo(
           {/* content — repaints here never re-blur the glass below */}
           <div className="npb-content">
             <div className="npb-row">
-              <PillTrack loadProgress={loadProgress} />
-              {bar.cluster && <ReactCluster />}
-
+              {/* LEFT: Transport Controls (Shuffle, Prev, Play/Pause, Next, Repeat, A-B) */}
               {bar.playback && (
-                <>
-                  <div className="npb-sep" />
-                  <div className="flex items-center gap-0.5">
-                    <ShuffleBtn />
-                    <PrevBtn />
-                    <PlayPauseBtn />
-                    <NextBtn />
-                    <RepeatBtn />
-                    <AbLoopBtn />
-                  </div>
-                </>
+                <div className="flex items-center gap-0.5 shrink-0">
+                  <ShuffleBtn />
+                  <PrevBtn />
+                  <PlayPauseBtn />
+                  <NextBtn />
+                  <RepeatBtn />
+                  <AbLoopBtn />
+                </div>
               )}
 
+              {/* CENTER: Track Info / Progress Well or Idle Emblem */}
+              <PillTrack
+                loadProgress={loadProgress}
+                showCluster={bar.cluster}
+                showTimeline={bar.timeline}
+              />
+
+              {/* RIGHT: Lyrics, Queue, Tuning, EQ, Volume */}
               {rightVisible && (
-                <>
-                  <div className="npb-sep" />
-                  <div className="flex items-center gap-0.5">
-                    {bar.tuning && <TuningBtn />}
-                    {bar.eq && <EqBtn />}
-                    {bar.lyrics && <LyricsBtn />}
-                    {bar.queue && <QueueBtn onClick={onQueueToggle} active={queueOpen} />}
-                    {bar.volume && (
-                      <>
-                        <ControlVolumeBtn size="sm" />
-                        <div className="npb-vol-slider flex items-center gap-2 pl-1">
-                          <VolumeSlider className="w-[72px]" />
-                          <VolumeLabel />
-                        </div>
-                      </>
-                    )}
-                  </div>
-                </>
+                <div className="flex items-center gap-0.5 shrink-0">
+                  {bar.lyrics && <LyricsBtn />}
+                  {bar.queue && <QueueBtn onClick={onQueueToggle} active={queueOpen} />}
+                  {bar.tuning && <TuningBtn />}
+                  {bar.eq && <EqBtn />}
+                  {bar.volume && (
+                    <>
+                      <ControlVolumeBtn size="sm" />
+                      <div className="npb-vol-slider flex items-center gap-1.5 pl-0.5">
+                        <VolumeSlider className="w-[68px]" />
+                      </div>
+                    </>
+                  )}
+                </div>
               )}
             </div>
-
-            {bar.timeline && (
-              <div className="npb-lane">
-                <LaneTimes />
-                <ProgressSlider />
-              </div>
-            )}
           </div>
         </div>
       </div>
