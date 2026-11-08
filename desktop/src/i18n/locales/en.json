@@ -204,7 +204,8 @@
       "dbHint": "Search inside the local SCD library — fast, scoped to mirrored content.",
       "scHint": "Search directly on SoundCloud — slower, but covers everything.",
       "ytHint": "Search YouTube videos. Listening downloads and converts them to MP3."
-    }
+    },
+    "browseCategories": "Browse Categories"
   },
   "sharing": {
     "public": "Public",

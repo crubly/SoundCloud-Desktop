@@ -5,6 +5,7 @@ import { useDebouncedValue } from '../components/discover/useDebouncedValue';
 import { Atmosphere } from '../components/search/Atmosphere';
 import { EmptyState } from '../components/search/EmptyState';
 import { EntityStrip } from '../components/search/EntityStrip';
+import { BrowseCategories } from '../components/search/BrowseCategories';
 import { GenreTicker } from '../components/search/GenreTicker';
 import { ResolveCard } from '../components/search/ResolveCard';
 import { SearchControls } from '../components/search/SearchControls';
@@ -198,7 +199,11 @@ export function Search() {
                   </button>
                 </div>
               ) : (
-                <GenreTicker genres={tickerGenres} onSelect={seedGenre} />
+                hasQuery ? (
+                  <GenreTicker genres={tickerGenres} onSelect={seedGenre} />
+                ) : (
+                  <BrowseCategories genres={tickerGenres} onSelect={seedGenre} />
+                )
               )}
             </div>
 
@@ -218,7 +223,7 @@ export function Search() {
               </div>
             ) : null}
 
-            {wallEmpty ? (
+            {!hasQuery && !dive ? null : wallEmpty ? (
               <EmptyState
                 icon={empty.icon}
                 title={empty.title}
