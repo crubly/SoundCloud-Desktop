@@ -85,12 +85,6 @@ mod detail {
             ns_window.setAppearance(Some(&dark_appearance));
         }
 
-        // 3. Make WKWebView transparent so native vibrancy shows through
-        unsafe {
-            let no: bool = false;
-            let _: () = msg_send![&*webview_view, _setDrawsBackground: no];
-        }
-
         // 4. Attach native macOS vibrancy / Liquid Glass backing view underneath contentView
         if let Some(content_view) = ns_window.contentView() {
             let bounds: NSRect = content_view.bounds();
@@ -113,7 +107,7 @@ mod detail {
             content_view.addSubview_positioned_relativeTo(
                 effect_view.as_super(),
                 NSWindowOrderingMode::Below,
-                Some(&webview_view),
+                None,
             );
 
             // If running on macOS 26+ (Tahoe) where NSGlassEffectView is available,
@@ -132,7 +126,7 @@ mod detail {
                             content_view.addSubview_positioned_relativeTo(
                                 &glass_view,
                                 NSWindowOrderingMode::Below,
-                                Some(&webview_view),
+                                None,
                             );
                             log_native(
                                 app,
